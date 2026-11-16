@@ -29,6 +29,7 @@ export const boardsApi = {
   activity: (id: string, limit = 50) => request<Activity[]>("GET", `/boards/${id}/activity?limit=${limit}`),
   members: (id: string) => request<Member[]>("GET", `/boards/${id}/members`),
   addMember: (id: string, email: string) => request<Member>("POST", `/boards/${id}/members`, { email }),
+  removeMember: (id: string, userId: string) => request<void>("DELETE", `/boards/${id}/members/${userId}`),
 };
 
 export const columnsApi = {

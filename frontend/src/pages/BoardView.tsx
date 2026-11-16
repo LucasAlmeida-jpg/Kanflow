@@ -16,7 +16,8 @@ import {
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
+import { useAuth } from "../auth";
 import type { Card, ColumnWithCards } from "../api";
 import { boardReducer, findCard, type BoardState } from "../board/boardReducer";
 import { placementOf } from "../board/commands";
@@ -27,8 +28,9 @@ import {
   KanflowBoardCardOverlay,
   KanflowBoardColumn,
   KanflowCardEditor,
+  KanflowShareDialog,
 } from "../components/board";
-import { KanflowButton, KanflowCard, KanflowConfirmDialog, KanflowIcon } from "../components/ui";
+import { KanflowAvatar, KanflowButton, KanflowCard, KanflowConfirmDialog, KanflowIcon } from "../components/ui";
 import { cx } from "../lib/cx";
 
 const STATUS_LABEL: Record<ConnectionStatus, string> = {
@@ -87,8 +89,13 @@ function isBelow(active: Active, over: Over) {
 
 export function BoardView() {
   const { id = "" } = useParams();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const {
     board,
+    members,
+    inviteMember,
+    removeMember,
     error,
     status,
     notice,
@@ -108,12 +115,13 @@ export function BoardView() {
     canRedo,
     undoLabel,
     redoLabel,
-  } = useBoard(id);
+  } = useBoard(id, user?.id);
   const [drag, setDrag] = useState<DragSnapshot | null>(null);
   const [overColumnId, setOverColumnId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<PendingDelete>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [activityOpen, setActivityOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const editing = editingId ? findCard(board, editingId) : null;
 
@@ -251,6 +259,26 @@ export function BoardView() {
             <KanflowIcon name="redo" />
             Refazer
           </KanflowButton>
+          <div className="board-people">
+            <ul className="avatar-stack" aria-label={`${members.length} pessoas no quadro: ${members.map((m) => m.name).join(", ")}`}>
+              {members.slice(0, 4).map((m) => (
+                <li key={m.id}>
+                  <KanflowAvatar name={m.name} size="sm" highlight={m.id === user?.id} />
+                </li>
+              ))}
+              {members.length > 4 && (
+                <li>
+                  <span className="avatar avatar-sm avatar-more" aria-hidden="true">
+                    +{members.length - 4}
+                  </span>
+                </li>
+              )}
+            </ul>
+            <KanflowButton variant="secondary" size="sm" onClick={() => setShareOpen(true)}>
+              <KanflowIcon name="users" />
+              Compartilhar
+            </KanflowButton>
+          </div>
           <KanflowButton variant="secondary" size="sm" onClick={() => setActivityOpen(true)}>
             <KanflowIcon name="history" />
             Atividade
@@ -304,6 +332,21 @@ export function BoardView() {
       />
 
       <KanflowActivityPanel open={activityOpen} board={board} onClose={() => setActivityOpen(false)} />
+
+      {user && (
+        <KanflowShareDialog
+          open={shareOpen}
+          boardTitle={board.title}
+          members={members}
+          currentUserId={user.id}
+          onInvite={inviteMember}
+          onRemove={(member) => void removeMember(member.id)}
+          onLeave={async () => {
+            if (await removeMember(user.id)) navigate("/");
+          }}
+          onClose={() => setShareOpen(false)}
+        />
+      )}
 
       <KanflowConfirmDialog
         open={!!deleteTarget}

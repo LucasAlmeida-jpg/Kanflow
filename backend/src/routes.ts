@@ -2,7 +2,7 @@ import { Router, type ErrorRequestHandler, type Request, type RequestHandler, ty
 import { currentUser, requireAuth } from "./auth.js";
 import { db } from "./db.js";
 import { apply, HttpError, isMember, text, toError, type OpType } from "./ops.js";
-import { broadcast, ownSocket } from "./realtime.js";
+import { broadcast, ownSocket, removeFromBoard } from "./realtime.js";
 
 export const routes = Router();
 routes.use(requireAuth);
@@ -118,14 +118,48 @@ routes.post("/boards/:id/members", async (req, res) => {
   if (!me) throw new HttpError(404, "board não encontrado");
   if (me.role !== "owner") throw new HttpError(403, "só o dono pode adicionar membros");
 
-  const user = await db.user.findUnique({ where: { email: text(req.body?.email, "email").toLowerCase() } });
-  if (!user) throw new HttpError(404, "usuário não encontrado");
-  await db.membership.upsert({
-    where: { boardId_userId: { boardId, userId: user.id } },
-    create: { boardId, userId: user.id, role: "member" },
-    update: {},
+  const user = await db.user.findUnique({ where: { email: text(req.body?.email, "email", 254).toLowerCase() } });
+  if (!user) throw new HttpError(404, "nenhuma conta com esse email; peça para a pessoa se cadastrar primeiro");
+  if (await db.membership.findUnique({ where: { boardId_userId: { boardId, userId: user.id } } })) {
+    throw new HttpError(409, `${user.name} já faz parte deste quadro`);
+  }
+  const member = { id: user.id, name: user.name, email: user.email, role: "member" as const };
+  await db.$transaction([
+    db.membership.create({ data: { boardId, userId: user.id, role: "member" } }),
+    db.activity.create({
+      data: { boardId, event: "member:added", entityId: user.id, actorId: me.userId, after: { id: user.id, name: user.name } },
+    }),
+  ]);
+  broadcast(boardId, "member:added", member);
+  res.status(201).json(member);
+});
+
+routes.delete("/boards/:id/members/:userId", async (req, res) => {
+  const boardId = req.params.id;
+  const targetId = req.params.userId;
+  const myId = currentUser(res).id;
+  const me = await db.membership.findUnique({ where: { boardId_userId: { boardId, userId: myId } } });
+  if (!me) throw new HttpError(404, "board não encontrado");
+  const leaving = targetId === myId;
+  if (leaving && me.role === "owner") throw new HttpError(400, "o dono não pode sair do quadro; apague o quadro ou continue como dono");
+  if (!leaving && me.role !== "owner") throw new HttpError(403, "só o dono pode remover membros");
+
+  const target = await db.membership.findUnique({
+    where: { boardId_userId: { boardId, userId: targetId } },
+    include: { user: { select: { name: true } } },
   });
-  res.status(201).json({ id: user.id, name: user.name, email: user.email, role: "member" });
+  if (!target) throw new HttpError(404, "membro não encontrado");
+  if (target.role === "owner") throw new HttpError(400, "o dono não pode ser removido");
+
+  await db.$transaction([
+    db.membership.delete({ where: { boardId_userId: { boardId, userId: targetId } } }),
+    db.activity.create({
+      data: { boardId, event: "member:removed", entityId: targetId, actorId: myId, before: { id: targetId, name: target.user.name } },
+    }),
+  ]);
+  broadcast(boardId, "member:removed", { id: targetId });
+  removeFromBoard(boardId, targetId);
+  res.status(204).end();
 });
 
 function run(op: OpType, input: (req: Request) => Record<string, unknown>, status = 200): RequestHandler {

@@ -312,6 +312,45 @@ assert.deepEqual(d.events, [["board:deleted", { id: toDelete.id }]]);
 assert.equal((await call("GET", `/boards/${toDelete.id}`)).status, 404);
 assert.equal((await call("GET", "/boards", undefined, undefined, token2)).data.some((x: any) => x.id === toDelete.id), false);
 
+const ownerId = (await call("GET", "/me")).data.id;
+const user2Id = (await call("GET", "/me", undefined, undefined, token2)).data.id;
+const team = (await call("POST", "/boards", { title: "Equipe" })).data;
+await join(d.socket, team.id);
+d.events.length = 0;
+const invited = await call("POST", `/boards/${team.id}/members`, { email: email2 });
+assert.equal(invited.status, 201);
+assert.deepEqual(invited.data, { id: user2Id, name: "Outra Pessoa", email: email2, role: "member" });
+assert.equal((await call("POST", `/boards/${team.id}/members`, { email: email2 })).status, 409);
+assert.equal((await call("POST", `/boards/${team.id}/members`, { email: "ninguem@x.com" })).status, 404);
+assert.equal((await call("POST", `/boards/${team.id}/members`, { email: email2 }, undefined, token2)).status, 403);
+await settle();
+assert.deepEqual(d.events, [["member:added", invited.data]]);
+
+assert.deepEqual(await join(e.socket, team.id), { ok: true });
+e.events.length = 0;
+assert.equal((await call("DELETE", `/boards/${team.id}/members/${ownerId}`, undefined, undefined, token2)).status, 403);
+assert.equal((await call("DELETE", `/boards/${team.id}/members/${ownerId}`)).status, 400);
+assert.equal((await call("DELETE", `/boards/${team.id}/members/nao-existe`)).status, 404);
+assert.equal((await call("DELETE", `/boards/${team.id}/members/${user2Id}`, undefined, undefined, strangerToken)).status, 404);
+
+assert.equal((await call("DELETE", `/boards/${team.id}/members/${user2Id}`)).status, 204);
+await settle();
+assert.deepEqual(e.events, [["member:removed", { id: user2Id }]]);
+await call("POST", `/boards/${team.id}/columns`, { title: "Depois da remoção" });
+await settle();
+assert.equal(e.events.length, 1);
+assert.equal((await call("GET", `/boards/${team.id}`, undefined, undefined, token2)).status, 404);
+const kickedOp = await e.socket.emitWithAck("op", { opId: "kicked", type: "createColumn", payload: { boardId: team.id, title: "x" } });
+assert.equal(kickedOp.status, 404);
+
+await call("POST", `/boards/${team.id}/members`, { email: email2 });
+assert.equal((await call("DELETE", `/boards/${team.id}/members/${user2Id}`, undefined, undefined, token2)).status, 204);
+const teamLog = (await call("GET", `/boards/${team.id}/activity?limit=4`)).data;
+assert.deepEqual(teamLog.map((x: any) => x.event), ["member:removed", "member:added", "column:created", "member:removed"]);
+assert.equal(teamLog[0].actor.id, user2Id);
+assert.equal(teamLog[0].before.name, "Outra Pessoa");
+assert.deepEqual((await call("GET", `/boards/${team.id}/members`)).data.map((m: any) => m.role), ["owner"]);
+
 const long = "x".repeat(201);
 assert.equal((await call("POST", "/boards", { title: long })).status, 400);
 assert.equal((await call("POST", `/columns/${col.id}/cards`, { title: "ok", description: "x".repeat(10_001) })).status, 400);

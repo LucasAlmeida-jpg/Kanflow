@@ -1,6 +1,6 @@
 import { io, type Socket } from "socket.io-client";
 import { getToken } from "./client";
-import type { Card, Column } from "./types";
+import type { Card, Column, Member } from "./types";
 
 export type OpType = "createColumn" | "deleteColumn" | "createCard" | "updateCard" | "moveCard" | "deleteCard";
 
@@ -11,6 +11,8 @@ export type OpResult<T = unknown> =
 export type ServerEvents = {
   "board:updated": (data: { id: string; title: string }) => void;
   "board:deleted": (data: { id: string }) => void;
+  "member:added": (member: Member) => void;
+  "member:removed": (data: { id: string }) => void;
   "column:created": (column: Column) => void;
   "column:deleted": (data: { id: string }) => void;
   "card:created": (card: Card) => void;

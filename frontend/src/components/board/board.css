@@ -320,6 +320,115 @@
   }
 }
 
+.board-people {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.avatar-stack {
+  display: flex;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.avatar-stack li + li {
+  margin-left: -6px;
+}
+
+.avatar-stack .avatar {
+  box-shadow: 0 0 0 2px var(--bg);
+}
+
+.avatar-more {
+  font-size: 10px;
+}
+
+.share-invite {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-2);
+}
+
+.share-invite .btn {
+  margin-top: 22px;
+}
+
+.share-note {
+  margin: 0;
+}
+
+.share-sent {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.share-members {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.share-members-title {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.share-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.share-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.share-row:last-child {
+  border-bottom: 0;
+}
+
+.share-person {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+
+.share-name {
+  color: var(--text-highlighted);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.share-email {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.share-role {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-muted);
+}
+
 .card-editor-form {
   display: grid;
   gap: var(--space-4);

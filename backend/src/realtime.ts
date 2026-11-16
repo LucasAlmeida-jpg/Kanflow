@@ -14,6 +14,7 @@ const recentOps = new Map<string, Promise<OpResult>>();
 const MAX_RECENT_OPS = 1000;
 const opsByUser = limiter(100, 10_000);
 const sessionRoom = (sessionId: string) => `session:${sessionId}`;
+const userRoom = (userId: string) => `user:${userId}`;
 
 async function execute(key: string, opId: string, type: unknown, payload: unknown, socketId: string, userId: string): Promise<OpResult> {
   if (!isOpType(type)) return { opId, ok: false, status: 400, error: "op desconhecida" };
@@ -37,7 +38,7 @@ io.use(async (socket, next) => {
 
 io.on("connection", (socket) => {
   const userId: string = socket.data.user.id;
-  void socket.join(sessionRoom(socket.data.sessionId));
+  void socket.join([sessionRoom(socket.data.sessionId), userRoom(userId)]);
 
   socket.on("board:join", async (boardId: unknown, ack?: (res: object) => void) => {
     if (typeof boardId !== "string" || !(await isMember(db, boardId, userId))) {
@@ -70,6 +71,10 @@ io.on("connection", (socket) => {
 
 export function disconnectSession(sessionId: string) {
   io.in(sessionRoom(sessionId)).disconnectSockets(true);
+}
+
+export function removeFromBoard(boardId: string, userId: string) {
+  io.in(userRoom(userId)).socketsLeave(room(boardId));
 }
 
 export function ownSocket(socketId: string | undefined, userId: string) {
