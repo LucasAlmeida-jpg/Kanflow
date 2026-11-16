@@ -281,6 +281,33 @@ const recreated = await op("createCard", { id: chosenId, columnId: col.id, title
 assert.equal(recreated.ok, true);
 assert.equal(recreated.result.version, 1);
 
+d.events.length = 0;
+const renamed = await call("PATCH", `/boards/${rt.id}`, { title: "Realtime renomeado" }, undefined, token2);
+assert.equal(renamed.status, 200);
+assert.equal(renamed.data.title, "Realtime renomeado");
+await settle();
+assert.deepEqual(d.events, [["board:updated", { id: rt.id, title: "Realtime renomeado" }]]);
+assert.equal((await call("PATCH", `/boards/${rt.id}`, { title: "" })).status, 400);
+assert.equal((await call("PATCH", `/boards/${rt.id}`, { title: "x" }, undefined, strangerToken)).status, 404);
+const [renameLog] = (await call("GET", `/boards/${rt.id}/activity?limit=1`)).data;
+assert.equal(renameLog.event, "board:updated");
+assert.deepEqual([renameLog.before.title, renameLog.after.title], ["Realtime", "Realtime renomeado"]);
+assert.equal((await call("GET", "/boards")).data.find((x: any) => x.id === rt.id).role, "owner");
+assert.equal((await call("GET", "/boards", undefined, undefined, token2)).data.find((x: any) => x.id === rt.id).role, "member");
+
+const toDelete = (await call("POST", "/boards", { title: "Para apagar" })).data;
+assert.equal(toDelete.role, "owner");
+await call("POST", `/boards/${toDelete.id}/members`, { email: email2 });
+await join(d.socket, toDelete.id);
+d.events.length = 0;
+assert.equal((await call("DELETE", `/boards/${toDelete.id}`, undefined, undefined, token2)).status, 403);
+assert.equal((await call("DELETE", `/boards/${toDelete.id}`, undefined, undefined, strangerToken)).status, 404);
+assert.equal((await call("DELETE", `/boards/${toDelete.id}`)).status, 204);
+await settle();
+assert.deepEqual(d.events, [["board:deleted", { id: toDelete.id }]]);
+assert.equal((await call("GET", `/boards/${toDelete.id}`)).status, 404);
+assert.equal((await call("GET", "/boards", undefined, undefined, token2)).data.some((x: any) => x.id === toDelete.id), false);
+
 const long = "x".repeat(201);
 assert.equal((await call("POST", "/boards", { title: long })).status, 400);
 assert.equal((await call("POST", `/columns/${col.id}/cards`, { title: "ok", description: "x".repeat(10_001) })).status, 400);

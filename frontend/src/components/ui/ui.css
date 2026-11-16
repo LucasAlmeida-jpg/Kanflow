@@ -307,6 +307,11 @@
   align-content: start;
 }
 
+.dialog-form {
+  display: grid;
+  gap: var(--space-4);
+}
+
 .dialog-text {
   margin: 0;
   color: var(--text);
@@ -327,6 +332,69 @@
 
 .confirm-dialog .btn-danger:hover:not(:disabled) {
   filter: brightness(1.1);
+}
+
+.empty-state {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-6);
+  border: 1px dashed var(--border-accented);
+  border-radius: var(--radius-lg);
+  background: var(--bg-muted);
+  text-align: center;
+}
+
+.empty-state-compact {
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-4);
+  border: 0;
+  background: transparent;
+}
+
+.empty-state-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background: var(--primary-soft);
+  color: var(--text-primary);
+}
+
+.empty-state-icon .icon {
+  font-size: 22px;
+}
+
+.empty-state-compact .empty-state-icon {
+  width: 40px;
+  height: 40px;
+}
+
+.empty-state-compact .empty-state-icon .icon {
+  font-size: 18px;
+}
+
+.empty-state-text {
+  display: grid;
+  gap: var(--space-1);
+  max-width: 360px;
+}
+
+.empty-state-title {
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 500;
+}
+
+.empty-state-compact .empty-state-title {
+  font-size: 15px;
+  line-height: 22px;
+}
+
+.empty-state-description {
+  margin: 0;
+  color: var(--text-muted);
 }
 
 @media (prefers-reduced-motion: reduce) {

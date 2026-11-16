@@ -240,6 +240,86 @@
   color: var(--warning);
 }
 
+.ui-card.board-tile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 72px;
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-6);
+  transition: border-color var(--transition);
+}
+
+.ui-card.board-tile:hover,
+.ui-card.board-tile:focus-within {
+  border-color: var(--primary);
+}
+
+.board-tile-link {
+  flex: 1;
+  min-width: 0;
+  color: var(--text-highlighted);
+  font-weight: 500;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.board-tile-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.board-tile-link:focus-visible {
+  outline: none;
+}
+
+.board-tile-link:focus-visible::after {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.board-tile-badge {
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-accented);
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.board-tile-actions {
+  position: relative;
+  display: flex;
+  opacity: 0;
+}
+
+.board-tile:hover .board-tile-actions,
+.board-tile:focus-within .board-tile-actions {
+  opacity: 1;
+}
+
+.board-tile .board-tile-action {
+  padding: 3px 6px;
+  color: var(--text-muted);
+}
+
+.board-tile .board-tile-action:hover {
+  color: var(--text-highlighted);
+}
+
+.board-tile .board-tile-delete:hover {
+  color: var(--error);
+}
+
+@media (hover: none) {
+  .board-tile-actions,
+  .board-card-actions {
+    opacity: 1;
+  }
+}
+
 .card-editor-form {
   display: grid;
   gap: var(--space-4);

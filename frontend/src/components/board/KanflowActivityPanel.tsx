@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { boardsApi, type Activity, type BoardDetail } from "../../api";
 import { describeActivity, timeAgo } from "../../board/activity";
-import { KanflowDialog } from "../ui";
+import { KanflowDialog, KanflowEmptyState } from "../ui";
 
 type KanflowActivityPanelProps = {
   open: boolean;
@@ -45,7 +45,14 @@ export function KanflowActivityPanel({ open, board, onClose }: KanflowActivityPa
         </p>
       )}
       {items === null && !error && <p className="muted">Carregando...</p>}
-      {items?.length === 0 && <p className="muted">Nada aconteceu neste quadro ainda.</p>}
+      {items?.length === 0 && (
+        <KanflowEmptyState
+          compact
+          icon="history"
+          title="Nada por aqui ainda"
+          description="Quando alguém criar, mover ou editar cards, as mudanças aparecem aqui."
+        />
+      )}
       {items && items.length > 0 && (
         <ol className="activity-list">
           {items.map((a) => (
