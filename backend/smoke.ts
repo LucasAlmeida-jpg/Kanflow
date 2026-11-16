@@ -270,6 +270,17 @@ assert.equal((await call("DELETE", `/columns/${restCol.id}`)).status, 204);
 const strangerToken = (await call("POST", "/auth/register", { email: `s-${crypto.randomUUID()}@kanflow.dev`, name: "Estranho", password: "senha-segura" })).data.token;
 assert.equal((await call("DELETE", `/columns/${col.id}`, undefined, undefined, strangerToken)).status, 404);
 
+const chosenId = crypto.randomUUID().replaceAll("-", "");
+const withId = await op("createCard", { id: chosenId, columnId: col.id, title: "Id do cliente" });
+assert.equal(withId.ok, true);
+assert.equal(withId.result.id, chosenId);
+assert.equal((await op("createCard", { id: chosenId, columnId: col.id, title: "Repetido" })).status, 409);
+assert.equal((await op("createCard", { id: "Inválido!", columnId: col.id, title: "x" })).status, 400);
+assert.equal((await op("deleteCard", { id: chosenId })).ok, true);
+const recreated = await op("createCard", { id: chosenId, columnId: col.id, title: "Recriado" });
+assert.equal(recreated.ok, true);
+assert.equal(recreated.result.version, 1);
+
 const long = "x".repeat(201);
 assert.equal((await call("POST", "/boards", { title: long })).status, 400);
 assert.equal((await call("POST", `/columns/${col.id}/cards`, { title: "ok", description: "x".repeat(10_001) })).status, 400);

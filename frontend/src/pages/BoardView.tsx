@@ -15,12 +15,19 @@ import {
   type UniqueIdentifier,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import type { Card, ColumnWithCards } from "../api";
 import { boardReducer, findCard, type BoardState } from "../board/boardReducer";
+import { placementOf } from "../board/commands";
 import { isTemp, useBoard, type ConnectionStatus, type DragSnapshot } from "../board/useBoard";
-import { KanflowAddForm, KanflowBoardCardOverlay, KanflowBoardColumn } from "../components/board";
+import {
+  KanflowActivityPanel,
+  KanflowAddForm,
+  KanflowBoardCardOverlay,
+  KanflowBoardColumn,
+  KanflowCardEditor,
+} from "../components/board";
 import { KanflowButton, KanflowCard, KanflowConfirmDialog, KanflowIcon } from "../components/ui";
 import { cx } from "../lib/cx";
 
@@ -89,19 +96,49 @@ export function BoardView() {
     createColumn,
     deleteColumn,
     createCard,
+    updateCard,
     deleteCard,
     previewMove,
     commitMove,
     restore,
+    isPending,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    undoLabel,
+    redoLabel,
   } = useBoard(id);
   const [drag, setDrag] = useState<DragSnapshot | null>(null);
   const [overColumnId, setOverColumnId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<PendingDelete>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [activityOpen, setActivityOpen] = useState(false);
+
+  const editing = editingId ? findCard(board, editingId) : null;
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      if (target?.closest("input, textarea, select, [contenteditable='true']") || document.querySelector("dialog[open]")) return;
+      const key = e.key.toLowerCase();
+      if (key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      } else if ((key === "z" && e.shiftKey) || key === "y") {
+        e.preventDefault();
+        redo();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [undo, redo]);
 
   const deleteTarget = latest(board, pendingDelete);
 
   function confirmDelete() {
-    if (deleteTarget?.type === "card") deleteCard(deleteTarget.card);
+    if (deleteTarget?.type === "card") void deleteCard(deleteTarget.card.id);
     if (deleteTarget?.type === "column") deleteColumn(deleteTarget.column);
     setPendingDelete(null);
   }
@@ -129,7 +166,9 @@ export function BoardView() {
   function onDragStart({ active }: DragStartEvent) {
     const at = findCard(board, String(active.id));
     if (!at) return;
-    setDrag({ card: at.card, columnId: at.column.id, index: at.index });
+    const placement = placementOf(board, at.card.id, isPending);
+    if (!placement) return;
+    setDrag({ card: at.card, columnId: at.column.id, index: at.index, placement });
     setOverColumnId(at.column.id);
   }
 
@@ -158,7 +197,7 @@ export function BoardView() {
       state = boardReducer(state, { type: "cardPreview", id: at.card.id, columnId: target.columnId, index: target.cardIndex });
       previewMove(at.card.id, target.columnId, target.cardIndex);
     }
-    commitMove(state, snapshot);
+    void commitMove(state, snapshot);
   }
 
   function onDragCancel() {
@@ -189,6 +228,34 @@ export function BoardView() {
         <span className={cx("board-status", `is-${status}`)} role="status">
           {STATUS_LABEL[status]}
         </span>
+        <div className="board-toolbar">
+          <KanflowButton
+            variant="ghost"
+            size="sm"
+            disabled={!canUndo}
+            onClick={undo}
+            aria-label={canUndo ? `Desfazer ${undoLabel}` : "Desfazer"}
+            title={canUndo ? `Desfazer ${undoLabel} (Ctrl+Z)` : "Nada para desfazer"}
+          >
+            <KanflowIcon name="undo" />
+            Desfazer
+          </KanflowButton>
+          <KanflowButton
+            variant="ghost"
+            size="sm"
+            disabled={!canRedo}
+            onClick={redo}
+            aria-label={canRedo ? `Refazer ${redoLabel}` : "Refazer"}
+            title={canRedo ? `Refazer ${redoLabel} (Ctrl+Shift+Z)` : "Nada para refazer"}
+          >
+            <KanflowIcon name="redo" />
+            Refazer
+          </KanflowButton>
+          <KanflowButton variant="secondary" size="sm" onClick={() => setActivityOpen(true)}>
+            <KanflowIcon name="history" />
+            Atividade
+          </KanflowButton>
+        </div>
       </header>
 
       <DndContext
@@ -207,8 +274,9 @@ export function BoardView() {
               column={column}
               pending={isTemp(column.id)}
               highlighted={!!drag && overColumnId === column.id}
-              isPendingCard={isTemp}
-              onAddCard={createCard}
+              isPendingCard={isPending}
+              onAddCard={(columnId, title) => void createCard(columnId, title)}
+              onOpenCard={(card) => setEditingId(card.id)}
               onDeleteCard={(card) => setPendingDelete({ type: "card", card })}
               onDelete={(column) => setPendingDelete({ type: "column", column })}
             />
@@ -227,6 +295,15 @@ export function BoardView() {
 
         <DragOverlay>{drag ? <KanflowBoardCardOverlay card={drag.card} /> : null}</DragOverlay>
       </DndContext>
+
+      <KanflowCardEditor
+        card={editing?.card ?? null}
+        columnTitle={editing?.column.title}
+        onSave={(cardId, patch) => void updateCard(cardId, patch)}
+        onClose={() => setEditingId(null)}
+      />
+
+      <KanflowActivityPanel open={activityOpen} board={board} onClose={() => setActivityOpen(false)} />
 
       <KanflowConfirmDialog
         open={!!deleteTarget}

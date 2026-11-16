@@ -12,6 +12,7 @@ type KanflowBoardColumnProps = {
   highlighted?: boolean;
   isPendingCard: (id: string) => boolean;
   onAddCard: (columnId: string, title: string) => void;
+  onOpenCard: (card: Card) => void;
   onDeleteCard: (card: Card) => void;
   onDelete: (column: ColumnWithCards) => void;
 };
@@ -22,6 +23,7 @@ export function KanflowBoardColumn({
   highlighted = false,
   isPendingCard,
   onAddCard,
+  onOpenCard,
   onDeleteCard,
   onDelete,
 }: KanflowBoardColumnProps) {
@@ -64,7 +66,13 @@ export function KanflowBoardColumn({
       <SortableContext items={column.cards.map((c) => c.id)} strategy={verticalListSortingStrategy}>
         <ul className="board-column-cards">
           {column.cards.map((card) => (
-            <KanflowBoardCard key={card.id} card={card} pending={isPendingCard(card.id)} onDelete={onDeleteCard} />
+            <KanflowBoardCard
+              key={card.id}
+              card={card}
+              pending={isPendingCard(card.id)}
+              onOpen={onOpenCard}
+              onDelete={onDeleteCard}
+            />
           ))}
         </ul>
       </SortableContext>
