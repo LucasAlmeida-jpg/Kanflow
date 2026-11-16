@@ -165,18 +165,24 @@
   transform: rotate(2deg);
 }
 
-.board-add-column {
+.page.board-page {
+  gap: var(--space-6);
+}
+
+.ui-card.board-add-column {
   flex: 0 0 280px;
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
 }
 
 .board-empty {
-  margin: 0 0 var(--space-2);
-  padding: 0 var(--space-1);
+  margin: 0;
 }
 
 .add-form {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-3);
 }
 
 .add-form-actions {

@@ -130,7 +130,7 @@ export function BoardView() {
   if (!board) return <main className="page muted">Carregando...</main>;
 
   return (
-    <main className="page">
+    <main className="page board-page">
       <header className="board-header">
         <h2>{board.title}</h2>
         <span className={cx("board-status", `is-${status}`)} role="status">

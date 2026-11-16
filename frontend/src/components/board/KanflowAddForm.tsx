@@ -51,10 +51,10 @@ export function KanflowAddForm({ openLabel, placeholder, submitLabel, onSubmit, 
         autoFocus
       />
       <div className="add-form-actions">
-        <KanflowButton type="submit" variant="primary" size="sm" disabled={!title.trim()}>
+        <KanflowButton type="submit" variant="primary" disabled={!title.trim()}>
           {submitLabel}
         </KanflowButton>
-        <KanflowButton variant="ghost" size="sm" onClick={close}>
+        <KanflowButton variant="ghost" onClick={close}>
           Cancelar
         </KanflowButton>
       </div>
