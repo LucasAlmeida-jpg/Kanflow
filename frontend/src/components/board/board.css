@@ -1,0 +1,218 @@
+.board-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.board-header h2 {
+  margin-right: auto;
+}
+
+.board-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-muted);
+}
+
+.board-status::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--text-dimmed);
+}
+
+.board-status.is-online::before {
+  background: var(--primary);
+}
+
+.board-status.is-offline {
+  color: var(--warning);
+}
+
+.board-status.is-offline::before {
+  background: var(--warning);
+}
+
+.board-lanes {
+  display: flex;
+  gap: var(--space-3);
+  overflow-x: auto;
+  align-items: flex-start;
+  padding-bottom: var(--space-4);
+}
+
+.ui-card.board-column {
+  flex: 0 0 280px;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 200px);
+  border-color: var(--border-muted);
+  transition:
+    border-color var(--transition),
+    background-color var(--transition);
+}
+
+.ui-card.board-column.is-over {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+}
+
+.board-column.is-pending {
+  opacity: 0.7;
+}
+
+.board-column-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-3) var(--space-2);
+}
+
+.board-column-header h3 {
+  margin-right: auto;
+  overflow-wrap: anywhere;
+}
+
+.board-column-count {
+  min-width: 22px;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-accented);
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 16px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.board-column-cards {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-1) var(--space-3);
+  display: grid;
+  gap: var(--space-2);
+  overflow-y: auto;
+  min-height: 8px;
+}
+
+.board-column-footer {
+  padding: var(--space-2) var(--space-3) var(--space-3);
+}
+
+.ui-card.board-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.ui-card.board-card:hover {
+  border-color: var(--border-accented);
+}
+
+.ui-card.board-card:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.board-card-title {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.board-card .board-card-delete {
+  margin: -3px -6px -3px 0;
+  padding: 3px 6px;
+  opacity: 0;
+  color: var(--text-muted);
+}
+
+.board-card:hover .board-card-delete,
+.board-card:focus-within .board-card-delete,
+.board-card .board-card-delete:focus-visible {
+  opacity: 1;
+}
+
+.board-card .board-card-delete:hover {
+  color: var(--error);
+}
+
+.ui-card.board-card.is-placeholder {
+  opacity: 0.4;
+  border-style: dashed;
+  border-color: var(--primary);
+  box-shadow: none;
+}
+
+.ui-card.board-card.is-pending {
+  cursor: progress;
+  color: var(--text-muted);
+  border-style: dashed;
+}
+
+.ui-card.board-card.is-overlay {
+  cursor: grabbing;
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary);
+  transform: rotate(2deg);
+}
+
+.board-add-column {
+  flex: 0 0 280px;
+}
+
+.board-empty {
+  margin: 0 0 var(--space-2);
+  padding: 0 var(--space-1);
+}
+
+.add-form {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.add-form-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.btn.add-form-open {
+  justify-content: flex-start;
+  color: var(--text-muted);
+}
+
+.board-notice {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--space-6) + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  max-width: min(480px, calc(100vw - 32px));
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-accented);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  color: var(--text-highlighted);
+  z-index: 10;
+}
+
+.board-notice .icon {
+  color: var(--warning);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-card.board-card.is-overlay {
+    transform: none;
+  }
+}

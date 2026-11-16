@@ -1,4 +1,4 @@
-import type { ComponentPropsWithoutRef, ElementType } from "react";
+import type { ComponentPropsWithRef, ElementType } from "react";
 import { cx } from "../../lib/cx";
 
 type KanflowCardProps<T extends ElementType> = {
@@ -6,7 +6,7 @@ type KanflowCardProps<T extends ElementType> = {
   variant?: "default" | "muted";
   padding?: "none" | "sm" | "md" | "lg";
   interactive?: boolean;
-} & Omit<ComponentPropsWithoutRef<T>, "as">;
+} & Omit<ComponentPropsWithRef<T>, "as">;
 
 export function KanflowCard<T extends ElementType = "div">({
   as,
