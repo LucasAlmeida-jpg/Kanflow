@@ -74,6 +74,43 @@
   font-variant-numeric: tabular-nums;
 }
 
+.board-column .board-column-delete {
+  margin: -3px -6px -3px 0;
+  padding: 3px 6px;
+  color: var(--text-muted);
+  opacity: 0;
+}
+
+.board-column:hover .board-column-delete,
+.board-column .board-column-delete:focus-visible,
+.board-column .board-column-delete[aria-expanded="true"] {
+  opacity: 1;
+}
+
+.board-column .board-column-delete:hover {
+  color: var(--error);
+}
+
+.board-column-confirm {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0 var(--space-3) var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--error);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+}
+
+.board-column-confirm p {
+  margin: 0;
+  color: var(--text-highlighted);
+}
+
+.board-column-confirm-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
 .board-column-cards {
   list-style: none;
   margin: 0;

@@ -71,6 +71,13 @@ describe("boardReducer", () => {
     expect(boardReducer(s, { type: "columnRemove", id: "doing" })!.columns).toHaveLength(1);
   });
 
+  it("restaura coluna apagada com os cards dela (rollback)", () => {
+    const todo = loaded!.columns[0]!;
+    const removed = boardReducer(loaded, { type: "columnRemove", id: todo.id });
+    const restored = boardReducer(removed, { type: "columnUpsert", column: todo });
+    expect(titles(restored)).toEqual(titles(loaded));
+  });
+
   it("insere coluna nova na posição certa e preserva os cards ao atualizar", () => {
     const s = boardReducer(loaded, { type: "columnUpsert", column: { id: "first", title: "Antes", position: "Zz", boardId: "b" } });
     expect(s!.columns.map((c) => c.id)).toEqual(["first", "todo", "doing"]);

@@ -2,7 +2,7 @@ import { io, type Socket } from "socket.io-client";
 import { getToken } from "./client";
 import type { Card, Column } from "./types";
 
-export type OpType = "createColumn" | "createCard" | "updateCard" | "moveCard" | "deleteCard";
+export type OpType = "createColumn" | "deleteColumn" | "createCard" | "updateCard" | "moveCard" | "deleteCard";
 
 export type OpResult<T = unknown> =
   | { opId: string; ok: true; result: T }
@@ -10,6 +10,7 @@ export type OpResult<T = unknown> =
 
 export type ServerEvents = {
   "column:created": (column: Column) => void;
+  "column:deleted": (data: { id: string }) => void;
   "card:created": (card: Card) => void;
   "card:updated": (card: Card) => void;
   "card:moved": (card: Card) => void;

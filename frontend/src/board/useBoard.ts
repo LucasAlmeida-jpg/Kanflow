@@ -1,6 +1,6 @@
 import { generateKeyBetween } from "fractional-indexing";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
-import { boardsApi, type Card, type Column } from "../api";
+import { boardsApi, type Card, type Column, type ColumnWithCards } from "../api";
 import { connectSocket, joinBoard, sendOp, type BoardSocket, type OpType } from "../api/socket";
 import { boardReducer, findCard, type BoardState } from "./boardReducer";
 
@@ -68,6 +68,7 @@ export function useBoard(boardId: string) {
       if (err.message === "não autenticado") setError("Sua sessão expirou. Entre de novo.");
     });
     socket.on("column:created", (column) => dispatch({ type: "columnUpsert", column }));
+    socket.on("column:deleted", ({ id }) => dispatch({ type: "columnRemove", id }));
     socket.on("card:created", (card) => dispatch({ type: "cardUpsert", card }));
     socket.on("card:updated", (card) => dispatch({ type: "cardUpsert", card }));
     socket.on("card:moved", (card) => dispatch({ type: "cardUpsert", card }));
@@ -122,6 +123,20 @@ export function useBoard(boardId: string) {
       );
     },
     [board, boardId, run],
+  );
+
+  const deleteColumn = useCallback(
+    (column: ColumnWithCards) => {
+      if (isTemp(column.id)) return;
+      dispatch({ type: "columnRemove", id: column.id });
+      void run(
+        "deleteColumn",
+        { id: column.id },
+        () => dispatch({ type: "columnUpsert", column }),
+        () => undefined,
+      );
+    },
+    [run],
   );
 
   const createCard = useCallback(
@@ -205,6 +220,7 @@ export function useBoard(boardId: string) {
     notice,
     dismissNotice: () => setNotice(null),
     createColumn,
+    deleteColumn,
     createCard,
     deleteCard,
     previewMove,

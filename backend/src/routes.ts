@@ -96,6 +96,7 @@ routes.post("/columns/:id/cards", run("createCard", (req) => ({ ...req.body, col
 routes.patch("/cards/:id", run("updateCard", (req) => ({ ...req.body, id: req.params.id })));
 routes.post("/cards/:id/move", run("moveCard", (req) => ({ ...req.body, id: req.params.id })));
 routes.delete("/cards/:id", run("deleteCard", (req) => ({ id: req.params.id }), 204));
+routes.delete("/columns/:id", run("deleteColumn", (req) => ({ id: req.params.id }), 204));
 
 export const onError: ErrorRequestHandler = (err, _req, res, _next) => {
   const { status, ...body } = toError(err);

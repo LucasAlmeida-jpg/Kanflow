@@ -245,6 +245,31 @@ assert.equal(d.socket.connected, true);
 assert.equal((await call("GET", "/me", undefined, undefined, login.data.token)).status, 401);
 assert.equal((await call("GET", "/me")).status, 200);
 
+const doomed = (await op("createColumn", { boardId: rt.id, title: "Apagar" })).result;
+await op("createCard", { columnId: doomed.id, title: "Vai junto 1" });
+await op("createCard", { columnId: doomed.id, title: "Vai junto 2" });
+await settle();
+d.events.length = 0;
+
+const removed = await op("deleteColumn", { id: doomed.id });
+assert.equal(removed.ok, true);
+assert.deepEqual(removed.result, { id: doomed.id });
+await settle();
+assert.deepEqual(d.events, [["column:deleted", { id: doomed.id }]]);
+const afterDelete = (await call("GET", `/boards/${rt.id}`)).data;
+assert.equal(afterDelete.columns.some((x: any) => x.id === doomed.id), false);
+const [deletedLog] = (await call("GET", `/boards/${rt.id}/activity?limit=1`)).data;
+assert.equal(deletedLog.event, "column:deleted");
+assert.equal(deletedLog.after, null);
+assert.deepEqual(deletedLog.before.cards.map((x: any) => x.title), ["Vai junto 1", "Vai junto 2"]);
+assert.equal((await call("DELETE", `/columns/${doomed.id}`)).status, 404);
+assert.equal((await call("DELETE", "/columns/nao-existe")).status, 404);
+const restCol = (await call("POST", `/boards/${rt.id}/columns`, { title: "Via REST" })).data;
+assert.equal((await call("DELETE", `/columns/${restCol.id}`)).status, 204);
+
+const strangerToken = (await call("POST", "/auth/register", { email: `s-${crypto.randomUUID()}@kanflow.dev`, name: "Estranho", password: "senha-segura" })).data.token;
+assert.equal((await call("DELETE", `/columns/${col.id}`, undefined, undefined, strangerToken)).status, 404);
+
 const long = "x".repeat(201);
 assert.equal((await call("POST", "/boards", { title: long })).status, 400);
 assert.equal((await call("POST", `/columns/${col.id}/cards`, { title: "ok", description: "x".repeat(10_001) })).status, 400);

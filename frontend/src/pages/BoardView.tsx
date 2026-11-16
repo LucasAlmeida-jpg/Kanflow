@@ -25,7 +25,7 @@ import { cx } from "../lib/cx";
 
 const STATUS_LABEL: Record<ConnectionStatus, string> = {
   connecting: "Conectando...",
-  online: "Ao vivo",
+  online: "Online",
   offline: "Reconectando...",
 };
 
@@ -48,8 +48,20 @@ function isBelow(active: Active, over: Over) {
 
 export function BoardView() {
   const { id = "" } = useParams();
-  const { board, error, status, notice, dismissNotice, createColumn, createCard, deleteCard, previewMove, commitMove, restore } =
-    useBoard(id);
+  const {
+    board,
+    error,
+    status,
+    notice,
+    dismissNotice,
+    createColumn,
+    deleteColumn,
+    createCard,
+    deleteCard,
+    previewMove,
+    commitMove,
+    restore,
+  } = useBoard(id);
   const [drag, setDrag] = useState<DragSnapshot | null>(null);
   const [overColumnId, setOverColumnId] = useState<string | null>(null);
 
@@ -157,6 +169,7 @@ export function BoardView() {
               isPendingCard={isTemp}
               onAddCard={createCard}
               onDeleteCard={deleteCard}
+              onDelete={deleteColumn}
             />
           ))}
 

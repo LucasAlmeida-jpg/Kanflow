@@ -4,7 +4,7 @@ export type BoardState = BoardDetail | null;
 
 export type BoardAction =
   | { type: "load"; board: BoardDetail }
-  | { type: "columnUpsert"; column: Column }
+  | { type: "columnUpsert"; column: Column | ColumnWithCards }
   | { type: "columnRemove"; id: string }
   | { type: "cardUpsert"; card: Card; force?: boolean }
   | { type: "cardRemove"; id: string }
@@ -39,7 +39,8 @@ export function boardReducer(state: BoardState, action: BoardAction): BoardState
   switch (action.type) {
     case "columnUpsert": {
       const existing = state.columns.find((c) => c.id === action.column.id);
-      const column: ColumnWithCards = { ...action.column, cards: existing?.cards ?? [] };
+      const cards = "cards" in action.column ? action.column.cards : (existing?.cards ?? []);
+      const column: ColumnWithCards = { ...action.column, cards };
       const others = state.columns.filter((c) => c.id !== action.column.id);
       return { ...state, columns: [...others, column].sort(byPosition) };
     }
