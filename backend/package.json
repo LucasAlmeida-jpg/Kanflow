@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "smoke": "tsx smoke.ts"
+    "smoke": "tsx smoke.ts",
+    "db:setup": "prisma migrate deploy && prisma generate",
+    "db:reset": "prisma migrate reset --force && prisma generate"
   },
   "keywords": [],
   "author": "",
