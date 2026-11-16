@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Board {
+  id        String   @id @default(cuid())
+  title     String
+  createdAt DateTime @default(now())
+  columns   Column[]
+}
+
+model Column {
+  id       String @id @default(cuid())
+  title    String
+  position String // fractional index: ordena colunas sem renumerar
+  boardId  String
+  board    Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cards    Card[]
+
+  @@index([boardId, position])
+}
+
+model Card {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @default("")
+  position    String // fractional index dentro da coluna
+  version     Int      @default(1) // usado depois para detectar conflitos
+  columnId    String
+  column      Column   @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  updatedAt   DateTime @updatedAt
+
+  @@index([columnId, position])
+}
