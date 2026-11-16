@@ -17,10 +17,11 @@ import {
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useState } from "react";
 import { Link, useParams } from "react-router";
+import type { Card, ColumnWithCards } from "../api";
 import { boardReducer, findCard, type BoardState } from "../board/boardReducer";
 import { isTemp, useBoard, type ConnectionStatus, type DragSnapshot } from "../board/useBoard";
 import { KanflowAddForm, KanflowBoardCardOverlay, KanflowBoardColumn } from "../components/board";
-import { KanflowButton, KanflowCard, KanflowIcon } from "../components/ui";
+import { KanflowButton, KanflowCard, KanflowConfirmDialog, KanflowIcon } from "../components/ui";
 import { cx } from "../lib/cx";
 
 const STATUS_LABEL: Record<ConnectionStatus, string> = {
@@ -33,6 +34,37 @@ const INSTRUCTIONS =
   "Para mover um card, pressione espaço ou enter. Use as setas para escolher o lugar e pressione espaço ou enter de novo para soltar. Esc cancela.";
 
 type Target = { columnId: string; cardIndex: number | null };
+
+type PendingDelete = { type: "card"; card: Card } | { type: "column"; column: ColumnWithCards } | null;
+
+function latest(board: BoardState, target: PendingDelete): PendingDelete {
+  if (target?.type === "card") {
+    const card = findCard(board, target.card.id)?.card;
+    return card ? { type: "card", card } : null;
+  }
+  if (target?.type === "column") {
+    const column = board?.columns.find((c) => c.id === target.column.id);
+    return column ? { type: "column", column } : null;
+  }
+  return null;
+}
+
+function deleteCopy(target: NonNullable<PendingDelete>) {
+  if (target.type === "card") {
+    return {
+      title: "Apagar card?",
+      description: `O card "${target.card.title}" será apagado para todos neste quadro.`,
+      confirmLabel: "Apagar card",
+    };
+  }
+  const count = target.column.cards.length;
+  const cards = count === 0 ? "" : count === 1 ? " e o card dela" : ` e os ${count} cards dela`;
+  return {
+    title: "Apagar coluna?",
+    description: `A coluna "${target.column.title}"${cards} ${count === 0 ? "será apagada" : "serão apagados"} para todos neste quadro.`,
+    confirmLabel: "Apagar coluna",
+  };
+}
 
 function targetOf(board: BoardState, over: Over | null): Target | null {
   if (!over) return null;
@@ -64,6 +96,15 @@ export function BoardView() {
   } = useBoard(id);
   const [drag, setDrag] = useState<DragSnapshot | null>(null);
   const [overColumnId, setOverColumnId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete>(null);
+
+  const deleteTarget = latest(board, pendingDelete);
+
+  function confirmDelete() {
+    if (deleteTarget?.type === "card") deleteCard(deleteTarget.card);
+    if (deleteTarget?.type === "column") deleteColumn(deleteTarget.column);
+    setPendingDelete(null);
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -168,8 +209,8 @@ export function BoardView() {
               highlighted={!!drag && overColumnId === column.id}
               isPendingCard={isTemp}
               onAddCard={createCard}
-              onDeleteCard={deleteCard}
-              onDelete={deleteColumn}
+              onDeleteCard={(card) => setPendingDelete({ type: "card", card })}
+              onDelete={(column) => setPendingDelete({ type: "column", column })}
             />
           ))}
 
@@ -186,6 +227,13 @@ export function BoardView() {
 
         <DragOverlay>{drag ? <KanflowBoardCardOverlay card={drag.card} /> : null}</DragOverlay>
       </DndContext>
+
+      <KanflowConfirmDialog
+        open={!!deleteTarget}
+        {...(deleteTarget ? deleteCopy(deleteTarget) : { title: "", confirmLabel: "" })}
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
 
       {notice && (
         <div className="board-notice" role="status">

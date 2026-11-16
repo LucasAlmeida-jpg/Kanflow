@@ -1,6 +1,5 @@
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { useRef, useState } from "react";
 import type { Card, ColumnWithCards } from "../../api";
 import { cx } from "../../lib/cx";
 import { KanflowButton, KanflowCard, KanflowIcon } from "../ui";
@@ -26,8 +25,6 @@ export function KanflowBoardColumn({
   onDeleteCard,
   onDelete,
 }: KanflowBoardColumnProps) {
-  const [confirming, setConfirming] = useState(false);
-  const deleteButtonRef = useRef<HTMLButtonElement>(null);
   const { setNodeRef, isOver } = useDroppable({
     id: `column:${column.id}`,
     data: { type: "column", columnId: column.id },
@@ -35,11 +32,6 @@ export function KanflowBoardColumn({
   });
   const titleId = `column-title-${column.id}`;
   const count = column.cards.length;
-
-  function cancel() {
-    setConfirming(false);
-    deleteButtonRef.current?.focus();
-  }
 
   return (
     <KanflowCard
@@ -57,32 +49,17 @@ export function KanflowBoardColumn({
         </span>
         {!pending && (
           <KanflowButton
-            ref={deleteButtonRef}
             variant="ghost"
             size="sm"
             className="board-column-delete"
             aria-label={`Apagar coluna ${column.title}`}
-            aria-expanded={confirming}
-            onClick={() => setConfirming(true)}
+            onClick={() => onDelete(column)}
           >
             <KanflowIcon name="trash" />
           </KanflowButton>
         )}
       </header>
 
-      {confirming && (
-        <div className="board-column-confirm" role="alertdialog" aria-label={`Apagar coluna ${column.title}`} onKeyDown={(e) => e.key === "Escape" && cancel()}>
-          <p>{count === 0 ? "Apagar esta coluna?" : `Apagar esta coluna e ${count === 1 ? "o card" : `os ${count} cards`} dela?`}</p>
-          <div className="board-column-confirm-actions">
-            <KanflowButton variant="danger" size="sm" onClick={() => onDelete(column)}>
-              Apagar coluna
-            </KanflowButton>
-            <KanflowButton variant="ghost" size="sm" onClick={cancel} autoFocus>
-              Cancelar
-            </KanflowButton>
-          </div>
-        </div>
-      )}
 
       <SortableContext items={column.cards.map((c) => c.id)} strategy={verticalListSortingStrategy}>
         <ul className="board-column-cards">
