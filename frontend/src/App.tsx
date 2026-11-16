@@ -1,5 +1,6 @@
 import { BrowserRouter, Link, Navigate, Route, Routes } from "react-router";
 import { AuthProvider, useAuth } from "./auth";
+import { KanflowButton, KanflowIcon } from "./components/ui";
 import { BoardView } from "./pages/BoardView";
 import { Boards } from "./pages/Boards";
 import { Login } from "./pages/Login";
@@ -17,9 +18,10 @@ function Shell() {
           Kanflow
         </Link>
         <span className="muted">{user.name}</span>
-        <button className="link" onClick={logout}>
+        <KanflowButton variant="ghost" size="sm" onClick={logout}>
+          <KanflowIcon name="exit" />
           Sair
-        </button>
+        </KanflowButton>
       </header>
       <Routes>
         <Route path="/" element={<Boards />} />

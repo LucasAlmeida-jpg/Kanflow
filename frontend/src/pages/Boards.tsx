@@ -1,11 +1,13 @@
 import { useEffect, useState, type SubmitEvent } from "react";
 import { Link } from "react-router";
 import { boardsApi, type Board } from "../api";
+import { KanflowButton, KanflowCard, KanflowIcon, KanflowInput } from "../components/ui";
 
 export function Boards() {
   const [boards, setBoards] = useState<Board[] | null>(null);
   const [title, setTitle] = useState("");
   const [error, setError] = useState("");
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     boardsApi.list()
@@ -17,12 +19,15 @@ export function Boards() {
     e.preventDefault();
     if (!title.trim()) return;
     setError("");
+    setCreating(true);
     try {
       const board = await boardsApi.create(title);
       setBoards((list) => [...(list ?? []), board]);
       setTitle("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "erro inesperado");
+    } finally {
+      setCreating(false);
     }
   }
 
@@ -31,13 +36,17 @@ export function Boards() {
       <h2>Seus quadros</h2>
 
       <form className="inline-form" onSubmit={create}>
-        <input
+        <KanflowInput
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Nome do novo quadro"
           aria-label="Nome do novo quadro"
+          maxLength={200}
         />
-        <button className="primary">Criar quadro</button>
+        <KanflowButton type="submit" variant="primary" loading={creating}>
+          {!creating && <KanflowIcon name="plus-circle" />}
+          Criar quadro
+        </KanflowButton>
       </form>
 
       {error && (
@@ -54,9 +63,9 @@ export function Boards() {
         <ul className="board-grid">
           {boards.map((b) => (
             <li key={b.id}>
-              <Link className="board-tile" to={`/boards/${b.id}`}>
+              <KanflowCard as={Link} to={`/boards/${b.id}`} variant="muted" padding="lg" interactive className="board-tile">
                 {b.title}
-              </Link>
+              </KanflowCard>
             </li>
           ))}
         </ul>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import { boardsApi, type BoardDetail } from "../api";
+import { KanflowCard, KanflowIcon } from "../components/ui";
 
 export function BoardView() {
   const { id } = useParams();
@@ -19,7 +20,10 @@ export function BoardView() {
         <p className="error" role="alert">
           {error}
         </p>
-        <Link to="/">Voltar para os quadros</Link>
+        <Link to="/" className="back-link">
+          <KanflowIcon name="arrow-left" />
+          Voltar para os quadros
+        </Link>
       </main>
     );
   }
@@ -30,16 +34,16 @@ export function BoardView() {
       <h2>{board.title}</h2>
       <div className="columns">
         {board.columns.map((col) => (
-          <section key={col.id} className="column" aria-label={col.title}>
+          <KanflowCard as="section" key={col.id} variant="muted" padding="sm" className="column" aria-label={col.title}>
             <h3>{col.title}</h3>
             <ul>
               {col.cards.map((card) => (
-                <li key={card.id} className="card">
+                <KanflowCard as="li" key={card.id} padding="sm">
                   {card.title}
-                </li>
+                </KanflowCard>
               ))}
             </ul>
-          </section>
+          </KanflowCard>
         ))}
         {board.columns.length === 0 && <p className="muted">Esse quadro ainda não tem colunas.</p>}
       </div>
