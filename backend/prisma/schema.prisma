@@ -8,11 +8,12 @@ datasource db {
 }
 
 model Board {
-  id         String     @id @default(cuid())
+  id         String       @id @default(cuid())
   title      String
-  createdAt  DateTime   @default(now())
+  createdAt  DateTime     @default(now())
   columns    Column[]
   activities Activity[]
+  members    Membership[]
 }
 
 model Column {
@@ -47,7 +48,41 @@ model Activity {
   entityId  String
   before    Json?
   after     Json?
+  actorId   String?
+  actor     User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
   createdAt DateTime @default(now())
 
   @@index([boardId, createdAt])
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime     @default(now())
+  sessions     Session[]
+  memberships  Membership[]
+  activities   Activity[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Membership {
+  boardId   String
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String
+  createdAt DateTime @default(now())
+
+  @@id([boardId, userId])
+  @@index([userId])
 }
