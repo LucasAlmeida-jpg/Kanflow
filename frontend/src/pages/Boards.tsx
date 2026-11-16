@@ -1,7 +1,14 @@
-import { useEffect, useState, type SubmitEvent } from "react";
+import { useEffect, useRef, useState, type SubmitEvent } from "react";
 import { boardsApi, type Board } from "../api";
 import { KanflowBoardTile } from "../components/board";
-import { KanflowButton, KanflowConfirmDialog, KanflowIcon, KanflowInput, KanflowPromptDialog } from "../components/ui";
+import {
+  KanflowButton,
+  KanflowConfirmDialog,
+  KanflowEmptyState,
+  KanflowIcon,
+  KanflowInput,
+  KanflowPromptDialog,
+} from "../components/ui";
 
 const message = (err: unknown) => (err instanceof Error ? err.message : "erro inesperado");
 
@@ -12,6 +19,7 @@ export function Boards() {
   const [creating, setCreating] = useState(false);
   const [renaming, setRenaming] = useState<Board | null>(null);
   const [deleting, setDeleting] = useState<Board | null>(null);
+  const titleRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     boardsApi
@@ -67,6 +75,7 @@ export function Boards() {
 
       <form className="inline-form" onSubmit={create}>
         <KanflowInput
+          ref={titleRef}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Nome do novo quadro"
@@ -88,7 +97,17 @@ export function Boards() {
       {boards === null ? (
         <p className="muted">Carregando...</p>
       ) : boards.length === 0 ? (
-        <p className="muted">Nenhum quadro ainda. Crie o primeiro acima.</p>
+        <KanflowEmptyState
+          icon="layers"
+          title="Nenhum quadro por aqui"
+          description="Um quadro reúne as colunas e os cards de um projeto. Dê um nome ao primeiro para começar."
+          action={
+            <KanflowButton variant="secondary" onClick={() => titleRef.current?.focus()}>
+              <KanflowIcon name="plus-circle" />
+              Criar meu primeiro quadro
+            </KanflowButton>
+          }
+        />
       ) : (
         <ul className="board-grid">
           {boards.map((b) => (
