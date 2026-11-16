@@ -7,7 +7,7 @@ const app = express();
 app.use(express.json());
 
 const http = createServer(app);
-const io = new Server(http, { cors: { origin: "*" } }); // ponytail: CORS aberto só em dev
+const io = new Server(http, { cors: { origin: "*" } });
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
 app.use(routes);

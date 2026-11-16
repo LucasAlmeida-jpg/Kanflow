@@ -4,7 +4,6 @@ import { db } from "./db.js";
 
 export const routes = Router();
 
-// Valida um campo de texto obrigatório vindo do body.
 function text(v: unknown, field: string): string {
   if (typeof v !== "string" || !v.trim()) throw new HttpError(400, `${field} é obrigatório`);
   return v.trim();
@@ -16,8 +15,6 @@ class HttpError extends Error {
   }
 }
 
-// --- Boards ---
-
 routes.get("/boards", async (_req, res) => {
   res.json(await db.board.findMany({ orderBy: { createdAt: "asc" } }));
 });
@@ -27,7 +24,6 @@ routes.post("/boards", async (req, res) => {
   res.status(201).json(board);
 });
 
-// Quadro completo: colunas e cards já ordenados por position.
 routes.get("/boards/:id", async (req, res) => {
   const board = await db.board.findUnique({
     where: { id: req.params.id },
@@ -42,8 +38,6 @@ routes.get("/boards/:id", async (req, res) => {
   res.json(board);
 });
 
-// --- Columns ---
-
 routes.post("/boards/:id/columns", async (req, res) => {
   const title = text(req.body?.title, "title");
   const last = await db.column.findFirst({
@@ -55,8 +49,6 @@ routes.post("/boards/:id/columns", async (req, res) => {
   });
   res.status(201).json(column);
 });
-
-// --- Cards ---
 
 routes.post("/columns/:id/cards", async (req, res) => {
   const title = text(req.body?.title, "title");
@@ -86,12 +78,46 @@ routes.patch("/cards/:id", async (req, res) => {
   res.json(card);
 });
 
+routes.post("/cards/:id/move", async (req, res) => {
+  const id = req.params.id;
+  const columnId = text(req.body?.columnId, "columnId");
+  const { beforeId, afterId } = req.body ?? {};
+  if (beforeId === id || afterId === id) throw new HttpError(400, "card não pode ser vizinho de si mesmo");
+
+  async function neighbor(nid: unknown): Promise<string | null> {
+    if (nid == null) return null;
+    const card = await db.card.findUnique({ where: { id: String(nid) } });
+    if (!card || card.columnId !== columnId) throw new HttpError(400, "vizinho inválido para essa coluna");
+    return card.position;
+  }
+
+  let before = await neighbor(beforeId);
+  const after = await neighbor(afterId);
+  if (before === null && after === null) {
+    const last = await db.card.findFirst({
+      where: { columnId, id: { not: id } },
+      orderBy: { position: "desc" },
+    });
+    before = last?.position ?? null;
+  }
+
+  if (before !== null && after !== null && before >= after) {
+    throw new HttpError(400, "beforeId precisa estar acima de afterId");
+  }
+  const position = generateKeyBetween(before, after);
+
+  const card = await db.card.update({
+    where: { id },
+    data: { columnId, position, version: { increment: 1 } },
+  });
+  res.json(card);
+});
+
 routes.delete("/cards/:id", async (req, res) => {
   await db.card.delete({ where: { id: req.params.id } });
   res.status(204).end();
 });
 
-// Erros -> JSON. P2025 = registro não existe, P2003 = pai (board/coluna) não existe.
 export const onError: ErrorRequestHandler = (err, _req, res, _next) => {
   if (err instanceof HttpError) return res.status(err.status).json({ error: err.message });
   if (err?.code === "P2025" || err?.code === "P2003") return res.status(404).json({ error: "não encontrado" });
