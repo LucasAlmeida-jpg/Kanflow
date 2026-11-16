@@ -18,24 +18,8 @@
   color: var(--text-muted);
 }
 
-.board-status::before {
-  content: "";
-  width: 8px;
-  height: 8px;
-  border-radius: var(--radius-full);
-  background: var(--text-dimmed);
-}
-
-.board-status.is-online::before {
-  background: var(--primary);
-}
-
 .board-status.is-offline {
   color: var(--warning);
-}
-
-.board-status.is-offline::before {
-  background: var(--warning);
 }
 
 .board-lanes {
