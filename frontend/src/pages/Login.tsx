@@ -1,10 +1,11 @@
 import { useState, type SubmitEvent } from "react";
+import { Link, useNavigate } from "react-router";
 import { useAuth } from "../auth";
-import { KanflowButton, KanflowCard, KanflowInput } from "../components/ui";
+import { KanflowButton, KanflowCard, KanflowInput, KanflowLogo } from "../components/ui";
 
-export function Login() {
+export function Login({ mode }: { mode: "login" | "register" }) {
   const { login, register } = useAuth();
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,7 +31,11 @@ export function Login() {
   return (
     <main className="auth">
       <KanflowCard as="form" variant="muted" padding="lg" className="auth-card" onSubmit={submit}>
-        <h1 className="brand">Kanflow</h1>
+        <h1 className="auth-brand">
+          <Link to="/" aria-label="Kanflow, página inicial">
+            <KanflowLogo size={32} />
+          </Link>
+        </h1>
         <p className="muted">{isLogin ? "Entre na sua conta" : "Crie sua conta"}</p>
 
         {!isLogin && (
@@ -64,7 +69,7 @@ export function Login() {
         <KanflowButton type="submit" variant="primary" block loading={busy}>
           {isLogin ? "Entrar" : "Criar conta"}
         </KanflowButton>
-        <KanflowButton variant="ghost" onClick={() => setMode(isLogin ? "register" : "login")}>
+        <KanflowButton variant="ghost" onClick={() => navigate(isLogin ? "/cadastro" : "/entrar")}>
           {isLogin ? "Não tem conta? Cadastre-se" : "Já tem conta? Entrar"}
         </KanflowButton>
       </KanflowCard>
