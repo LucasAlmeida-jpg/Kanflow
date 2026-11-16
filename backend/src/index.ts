@@ -1,5 +1,6 @@
 import express from "express";
 import { createServer } from "node:http";
+import { authRoutes } from "./auth.js";
 import { routes, onError } from "./routes.js";
 import { io } from "./realtime.js";
 
@@ -7,6 +8,7 @@ const app = express();
 app.use(express.json());
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
+app.use(authRoutes);
 app.use(routes);
 app.use(onError);
 

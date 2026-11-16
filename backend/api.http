@@ -1,14 +1,34 @@
 @api = http://localhost:3001
+@token = {{login.response.body.$.token}}
 
 ###
 GET {{api}}/health
 
 ###
+POST {{api}}/auth/register
+content-type: application/json
+
+{ "email": "eu@kanflow.dev", "name": "Eu", "password": "senha-segura" }
+
+###
+# @name login
+POST {{api}}/auth/login
+content-type: application/json
+
+{ "email": "eu@kanflow.dev", "password": "senha-segura" }
+
+###
+GET {{api}}/me
+authorization: Bearer {{token}}
+
+###
 GET {{api}}/boards
+authorization: Bearer {{token}}
 
 ###
 # @name board
 POST {{api}}/boards
+authorization: Bearer {{token}}
 content-type: application/json
 
 { "title": "Meu quadro" }
@@ -16,6 +36,7 @@ content-type: application/json
 ###
 # @name todo
 POST {{api}}/boards/{{board.response.body.$.id}}/columns
+authorization: Bearer {{token}}
 content-type: application/json
 
 { "title": "A fazer" }
@@ -23,6 +44,7 @@ content-type: application/json
 ###
 # @name done
 POST {{api}}/boards/{{board.response.body.$.id}}/columns
+authorization: Bearer {{token}}
 content-type: application/json
 
 { "title": "Feito" }
@@ -30,6 +52,7 @@ content-type: application/json
 ###
 # @name card1
 POST {{api}}/columns/{{todo.response.body.$.id}}/cards
+authorization: Bearer {{token}}
 content-type: application/json
 
 { "title": "Card 1", "description": "primeiro card" }
@@ -37,48 +60,68 @@ content-type: application/json
 ###
 # @name card2
 POST {{api}}/columns/{{todo.response.body.$.id}}/cards
+authorization: Bearer {{token}}
 content-type: application/json
 
 { "title": "Card 2" }
 
 ###
 GET {{api}}/boards/{{board.response.body.$.id}}
+authorization: Bearer {{token}}
 
 ###
 PATCH {{api}}/cards/{{card1.response.body.$.id}}
+authorization: Bearer {{token}}
 content-type: application/json
 
 { "title": "Card 1 editado" }
 
 ###
 POST {{api}}/cards/{{card2.response.body.$.id}}/move
+authorization: Bearer {{token}}
 content-type: application/json
 
 { "columnId": "{{todo.response.body.$.id}}", "afterId": "{{card1.response.body.$.id}}" }
 
 ###
 POST {{api}}/cards/{{card1.response.body.$.id}}/move
+authorization: Bearer {{token}}
 content-type: application/json
 
 { "columnId": "{{done.response.body.$.id}}" }
 
 ###
-POST {{api}}/boards
-content-type: application/json
-
-{ "title": "" }
-
-###
-GET {{api}}/boards/nao-existe
-
-###
-DELETE {{api}}/cards/{{card2.response.body.$.id}}
-
-###
 PATCH {{api}}/cards/{{card1.response.body.$.id}}
+authorization: Bearer {{token}}
 content-type: application/json
 
 { "title": "Conflito", "version": 1 }
 
 ###
+DELETE {{api}}/cards/{{card2.response.body.$.id}}
+authorization: Bearer {{token}}
+
+###
 GET {{api}}/boards/{{board.response.body.$.id}}/activity?limit=20
+authorization: Bearer {{token}}
+
+###
+GET {{api}}/boards/{{board.response.body.$.id}}/members
+authorization: Bearer {{token}}
+
+###
+POST {{api}}/boards/{{board.response.body.$.id}}/members
+authorization: Bearer {{token}}
+content-type: application/json
+
+{ "email": "outra@kanflow.dev" }
+
+###
+POST {{api}}/boards
+authorization: Bearer {{token}}
+content-type: application/json
+
+{ "title": "" }
+
+###
+GET {{api}}/boards
