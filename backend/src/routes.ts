@@ -1,6 +1,6 @@
 import { Router, type ErrorRequestHandler, type Request, type RequestHandler } from "express";
 import { db } from "./db.js";
-import { HttpError, ops, text, toError, type OpType } from "./ops.js";
+import { apply, HttpError, text, toError, type OpType } from "./ops.js";
 import { broadcast } from "./realtime.js";
 
 export const routes = Router();
@@ -28,9 +28,19 @@ routes.get("/boards/:id", async (req, res) => {
   res.json(board);
 });
 
+routes.get("/boards/:id/activity", async (req, res) => {
+  const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
+  const activity = await db.activity.findMany({
+    where: { boardId: req.params.id },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: limit,
+  });
+  res.json(activity);
+});
+
 function run(op: OpType, input: (req: Request) => Record<string, unknown>, status = 200): RequestHandler {
   return async (req, res) => {
-    const change = await ops[op](input(req));
+    const change = await apply(op, input(req));
     broadcast(change.boardId, change.event, change.data, req.get("x-socket-id"));
     if (status === 204) res.status(204).end();
     else res.status(status).json(change.result);
@@ -44,6 +54,6 @@ routes.post("/cards/:id/move", run("moveCard", (req) => ({ ...req.body, id: req.
 routes.delete("/cards/:id", run("deleteCard", (req) => ({ id: req.params.id }), 204));
 
 export const onError: ErrorRequestHandler = (err, _req, res, _next) => {
-  const { status, error } = toError(err);
-  res.status(status).json({ error });
+  const { status, ...body } = toError(err);
+  res.status(status).json(body);
 };

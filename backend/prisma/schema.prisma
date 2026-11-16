@@ -8,10 +8,11 @@ datasource db {
 }
 
 model Board {
-  id        String   @id @default(cuid())
-  title     String
-  createdAt DateTime @default(now())
-  columns   Column[]
+  id         String     @id @default(cuid())
+  title      String
+  createdAt  DateTime   @default(now())
+  columns    Column[]
+  activities Activity[]
 }
 
 model Column {
@@ -36,4 +37,17 @@ model Card {
   updatedAt   DateTime @updatedAt
 
   @@index([columnId, position])
+}
+
+model Activity {
+  id        String   @id @default(cuid())
+  boardId   String
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  event     String
+  entityId  String
+  before    Json?
+  after     Json?
+  createdAt DateTime @default(now())
+
+  @@index([boardId, createdAt])
 }

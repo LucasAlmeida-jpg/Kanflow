@@ -73,3 +73,12 @@ GET {{api}}/boards/nao-existe
 
 ###
 DELETE {{api}}/cards/{{card2.response.body.$.id}}
+
+###
+PATCH {{api}}/cards/{{card1.response.body.$.id}}
+content-type: application/json
+
+{ "title": "Conflito", "version": 1 }
+
+###
+GET {{api}}/boards/{{board.response.body.$.id}}/activity?limit=20
