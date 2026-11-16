@@ -155,6 +155,14 @@ export const ops = {
     const data = { id: before.id, columnId: before.columnId };
     return { boardId, event: "card:deleted", entityId: before.id, before, data, result: data };
   },
+
+  async deleteColumn(tx: Tx, p: Input, userId: string): Promise<Change> {
+    const column = await columnOr404(tx, text(p.id, "id"), userId);
+    const cards = await tx.card.findMany({ where: { columnId: column.id }, orderBy: { position: "asc" } });
+    await tx.column.delete({ where: { id: column.id } });
+    const data = { id: column.id };
+    return { boardId: column.boardId, event: "column:deleted", entityId: column.id, before: { ...column, cards }, data, result: data };
+  },
 };
 
 export type OpType = keyof typeof ops;
@@ -172,7 +180,7 @@ export function apply(type: OpType, p: Input, userId: string): Promise<Change> {
         entityId: change.entityId,
         actorId: userId,
         before: json(change.before),
-        after: change.event === "card:deleted" ? Prisma.DbNull : json(change.data),
+        after: change.event.endsWith(":deleted") ? Prisma.DbNull : json(change.data),
       },
     });
     return change;

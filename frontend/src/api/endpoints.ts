@@ -31,6 +31,7 @@ export const boardsApi = {
 
 export const columnsApi = {
   create: (boardId: string, title: string) => request<Column>("POST", `/boards/${boardId}/columns`, { title }),
+  remove: (id: string) => request<void>("DELETE", `/columns/${id}`),
 };
 
 export const cardsApi = {
