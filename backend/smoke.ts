@@ -237,9 +237,40 @@ assert.deepEqual(e.events.map(([ev, x]) => [ev, x.title]), [["card:updated", "Vi
 const [last] = (await call("GET", `/boards/${rt.id}/activity?limit=1`)).data;
 assert.equal(last.actor.name, "Outra Pessoa");
 
+const loggedOut = await client(login.data.token);
+const kicked = new Promise<string>((ok) => loggedOut.socket.once("disconnect", ok));
 assert.equal((await call("POST", "/auth/logout", undefined, undefined, login.data.token)).status, 204);
+assert.equal(await kicked, "io server disconnect");
+assert.equal(d.socket.connected, true);
 assert.equal((await call("GET", "/me", undefined, undefined, login.data.token)).status, 401);
 assert.equal((await call("GET", "/me")).status, 200);
+
+const long = "x".repeat(201);
+assert.equal((await call("POST", "/boards", { title: long })).status, 400);
+assert.equal((await call("POST", `/columns/${col.id}/cards`, { title: "ok", description: "x".repeat(10_001) })).status, 400);
+assert.equal((await call("PATCH", `/cards/${card.id}`, { description: "x".repeat(10_001) })).status, 400);
+assert.equal((await op("createCard", { columnId: col.id, title: long })).status, 400);
+assert.equal((await call("POST", "/auth/register", { email: `n-${crypto.randomUUID()}@x.dev`, name: "x".repeat(101), password: "senha-segura" })).status, 400);
+assert.equal((await call("POST", "/auth/register", { email: `p-${crypto.randomUUID()}@x.dev`, name: "P", password: "x".repeat(201) })).status, 400);
+
+const target = `alvo-${crypto.randomUUID()}@kanflow.dev`;
+for (let i = 0; i < 10; i++) {
+  assert.equal((await call("POST", "/auth/login", { email: target, password: `tentativa-${i}` })).status, 401);
+}
+const blocked = await fetch(`${B}/auth/login`, {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({ email: target.toUpperCase(), password: "mais-uma" }),
+});
+assert.equal(blocked.status, 429);
+assert.ok(Number(blocked.headers.get("retry-after")) > 0);
+assert.equal((await call("POST", "/auth/login", { email, password: "senha-segura" })).status, 200);
+
+const flood = await Promise.all(
+  Array.from({ length: 120 }, (_, i) => e.socket.emitWithAck("op", { opId: `flood-${i}`, type: "nada", payload: {} })),
+);
+assert.ok(flood.some((r) => r.status === 429));
+assert.ok(flood.filter((r) => r.status === 400).length <= 100);
 
 [a, b, c, d, e, outsider].forEach((x) => x.socket.disconnect());
 console.log("smoke ok");
