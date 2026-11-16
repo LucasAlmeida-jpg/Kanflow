@@ -41,7 +41,7 @@ export function KanflowSiteFooter() {
         </div>
         <div className="site-footer-bottom">
           <KanflowLogo size={22} />
-          <span>© 2026 Kanflow · Projeto do Lucão</span>
+          <span>© 2026 Kanflow</span>
         </div>
       </div>
     </footer>
