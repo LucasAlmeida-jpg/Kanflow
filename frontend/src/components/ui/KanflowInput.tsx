@@ -1,5 +1,5 @@
 import type { ComponentPropsWithRef, ReactNode } from "react";
-import { cx } from "./cx";
+import { cx } from "../../lib/cx";
 import { KanflowField } from "./KanflowField";
 
 type KanflowInputProps = ComponentPropsWithRef<"input"> & {

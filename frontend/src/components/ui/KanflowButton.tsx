@@ -1,5 +1,5 @@
 import type { ComponentPropsWithRef } from "react";
-import { cx } from "./cx";
+import { cx } from "../../lib/cx";
 
 type KanflowButtonProps = ComponentPropsWithRef<"button"> & {
   variant?: "primary" | "secondary" | "ghost" | "danger";

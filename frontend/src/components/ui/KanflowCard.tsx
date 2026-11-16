@@ -1,5 +1,5 @@
 import type { ComponentPropsWithoutRef, ElementType } from "react";
-import { cx } from "./cx";
+import { cx } from "../../lib/cx";
 
 type KanflowCardProps<T extends ElementType> = {
   as?: T;

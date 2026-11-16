@@ -1,6 +1,6 @@
 import type { ComponentPropsWithoutRef } from "react";
-import { cx } from "./cx";
-import type { IconName } from "./icon-names";
+import { cx } from "../../lib/cx";
+import type { IconName } from "../../assets/linearicons/icon-names";
 
 type KanflowIconProps = Omit<ComponentPropsWithoutRef<"span">, "children"> & {
   name: IconName;
