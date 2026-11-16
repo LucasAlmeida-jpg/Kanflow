@@ -65,6 +65,14 @@ assert.equal((await call("POST", "/columns/nao-existe/cards", { title: "x" })).s
 assert.equal((await call("DELETE", `/cards/${c1.id}`)).status, 204);
 assert.equal((await call("PATCH", `/cards/${c1.id}`, { title: "x" })).status, 404);
 
+async function addMember(boardId: string, inviteeEmail: string, inviteeToken: string) {
+  const sent = await call("POST", `/boards/${boardId}/invitations`, { email: inviteeEmail });
+  assert.equal(sent.status, 201);
+  const accepted = await call("POST", `/invitations/${sent.data.id}/accept`, undefined, undefined, inviteeToken);
+  assert.equal(accepted.status, 200);
+  return sent.data;
+}
+
 async function client(as: string = token) {
   const socket = connect(B, { transports: ["websocket"], auth: { token: as } });
   await new Promise((ok) => socket.once("connect", () => ok(null)));
@@ -203,6 +211,7 @@ noAuth.close();
 
 const email2 = `smoke2-${crypto.randomUUID()}@kanflow.dev`;
 const token2 = (await call("POST", "/auth/register", { email: email2, name: "Outra Pessoa", password: "senha-segura" })).data.token;
+const strangerToken = (await call("POST", "/auth/register", { email: `s-${crypto.randomUUID()}@kanflow.dev`, name: "Estranho", password: "senha-segura" })).data.token;
 const e = await client(token2);
 const card = (await op("createCard", { columnId: col.id, title: "Privado" })).result;
 
@@ -217,11 +226,38 @@ assert.equal(peek.status, 404);
 assert.equal(peek.current, undefined);
 assert.equal((await e.socket.emitWithAck("op", { opId: "mv", type: "moveCard", payload: { id: card.id, columnId: col.id } })).status, 404);
 
-assert.equal((await call("POST", `/boards/${rt.id}/members`, { email: "ninguem@x.com" })).status, 404);
-const added = await call("POST", `/boards/${rt.id}/members`, { email: email2.toUpperCase() });
-assert.equal(added.status, 201);
-assert.equal(added.data.role, "member");
-assert.equal((await call("POST", `/boards/${rt.id}/members`, { email: email2 }, undefined, token2)).status, 403);
+const ghost = await call("POST", `/boards/${rt.id}/invitations`, { email: "ninguem@x.com" });
+assert.equal(ghost.status, 201);
+assert.deepEqual(Object.keys(ghost.data).sort(), ["createdAt", "email", "id"]);
+const sent = await call("POST", `/boards/${rt.id}/invitations`, { email: email2.toUpperCase() });
+assert.equal(sent.status, 201);
+assert.deepEqual(Object.keys(sent.data).sort(), ["createdAt", "email", "id"]);
+assert.equal(sent.data.email, email2);
+assert.equal((await call("POST", `/boards/${rt.id}/invitations`, { email: email2 })).data.id, sent.data.id);
+assert.equal((await call("POST", `/boards/${rt.id}/invitations`, { email: "sem-arroba" })).status, 400);
+assert.equal((await call("POST", `/boards/${rt.id}/invitations`, { email: email2 }, undefined, token2)).status, 404);
+assert.equal((await call("GET", `/boards/${rt.id}`, undefined, undefined, token2)).status, 404);
+assert.deepEqual((await call("GET", "/boards", undefined, undefined, token2)).data, []);
+assert.deepEqual(
+  (await call("GET", `/boards/${rt.id}/invitations`)).data.map((i: any) => i.email).sort(),
+  [email2, "ninguem@x.com"].sort(),
+);
+
+const pending = (await call("GET", "/invitations", undefined, undefined, token2)).data;
+assert.deepEqual(pending.map((i: any) => [i.id, i.board.id, i.invitedBy]), [[sent.data.id, rt.id, "Smoke"]]);
+assert.deepEqual((await call("GET", "/invitations", undefined, undefined, strangerToken)).data, []);
+assert.equal((await call("POST", `/invitations/${sent.data.id}/accept`, undefined, undefined, strangerToken)).status, 404);
+assert.equal((await call("POST", `/invitations/${sent.data.id}/decline`)).status, 404);
+assert.equal((await call("DELETE", `/boards/${rt.id}/invitations/${ghost.data.id}`, undefined, undefined, token2)).status, 404);
+assert.equal((await call("DELETE", `/boards/${rt.id}/invitations/${ghost.data.id}`)).status, 204);
+assert.equal((await call("DELETE", `/boards/${rt.id}/invitations/${ghost.data.id}`)).status, 404);
+
+const accepted = await call("POST", `/invitations/${sent.data.id}/accept`, undefined, undefined, token2);
+assert.deepEqual(accepted.data, { id: rt.id, title: rt.title });
+assert.equal((await call("POST", `/invitations/${sent.data.id}/accept`, undefined, undefined, token2)).status, 404);
+assert.deepEqual((await call("GET", "/invitations", undefined, undefined, token2)).data, []);
+assert.equal((await call("POST", `/boards/${rt.id}/invitations`, { email: email2 }, undefined, token2)).status, 403);
+assert.equal((await call("POST", `/boards/${rt.id}/invitations`, { email: email2 })).status, 409);
 assert.deepEqual((await call("GET", `/boards/${rt.id}/members`, undefined, undefined, token2)).data.map((m: any) => m.role), ["owner", "member"]);
 assert.deepEqual((await call("GET", "/boards", undefined, undefined, token2)).data.map((x: any) => x.id), [rt.id]);
 
@@ -267,7 +303,6 @@ assert.equal((await call("DELETE", "/columns/nao-existe")).status, 404);
 const restCol = (await call("POST", `/boards/${rt.id}/columns`, { title: "Via REST" })).data;
 assert.equal((await call("DELETE", `/columns/${restCol.id}`)).status, 204);
 
-const strangerToken = (await call("POST", "/auth/register", { email: `s-${crypto.randomUUID()}@kanflow.dev`, name: "Estranho", password: "senha-segura" })).data.token;
 assert.equal((await call("DELETE", `/columns/${col.id}`, undefined, undefined, strangerToken)).status, 404);
 
 const chosenId = crypto.randomUUID().replaceAll("-", "");
@@ -301,7 +336,7 @@ assert.equal((await call("GET", "/boards", undefined, undefined, token2)).data.f
 
 const toDelete = (await call("POST", "/boards", { title: "Para apagar" })).data;
 assert.equal(toDelete.role, "owner");
-await call("POST", `/boards/${toDelete.id}/members`, { email: email2 });
+await addMember(toDelete.id, email2, token2);
 await join(d.socket, toDelete.id);
 d.events.length = 0;
 assert.equal((await call("DELETE", `/boards/${toDelete.id}`, undefined, undefined, token2)).status, 403);
@@ -317,14 +352,16 @@ const user2Id = (await call("GET", "/me", undefined, undefined, token2)).data.id
 const team = (await call("POST", "/boards", { title: "Equipe" })).data;
 await join(d.socket, team.id);
 d.events.length = 0;
-const invited = await call("POST", `/boards/${team.id}/members`, { email: email2 });
-assert.equal(invited.status, 201);
-assert.deepEqual(invited.data, { id: user2Id, name: "Outra Pessoa", email: email2, role: "member" });
-assert.equal((await call("POST", `/boards/${team.id}/members`, { email: email2 })).status, 409);
-assert.equal((await call("POST", `/boards/${team.id}/members`, { email: "ninguem@x.com" })).status, 404);
-assert.equal((await call("POST", `/boards/${team.id}/members`, { email: email2 }, undefined, token2)).status, 403);
+const declined = (await call("POST", `/boards/${team.id}/invitations`, { email: email2 })).data;
+assert.equal((await call("POST", `/invitations/${declined.id}/decline`, undefined, undefined, token2)).status, 204);
+assert.deepEqual((await call("GET", `/boards/${team.id}/invitations`)).data, []);
+assert.equal((await call("GET", `/boards/${team.id}`, undefined, undefined, token2)).status, 404);
+await addMember(team.id, email2, token2);
 await settle();
-assert.deepEqual(d.events, [["member:added", invited.data]]);
+assert.deepEqual(d.events, [["member:added", { id: user2Id, name: "Outra Pessoa", email: email2, role: "member" }]]);
+const [joinedLog] = (await call("GET", `/boards/${team.id}/activity?limit=1`)).data;
+assert.equal(joinedLog.event, "member:added");
+assert.equal(joinedLog.actor.id, user2Id);
 
 assert.deepEqual(await join(e.socket, team.id), { ok: true });
 e.events.length = 0;
@@ -343,7 +380,7 @@ assert.equal((await call("GET", `/boards/${team.id}`, undefined, undefined, toke
 const kickedOp = await e.socket.emitWithAck("op", { opId: "kicked", type: "createColumn", payload: { boardId: team.id, title: "x" } });
 assert.equal(kickedOp.status, 404);
 
-await call("POST", `/boards/${team.id}/members`, { email: email2 });
+await addMember(team.id, email2, token2);
 assert.equal((await call("DELETE", `/boards/${team.id}/members/${user2Id}`, undefined, undefined, token2)).status, 204);
 const teamLog = (await call("GET", `/boards/${team.id}/activity?limit=4`)).data;
 assert.deepEqual(teamLog.map((x: any) => x.event), ["member:removed", "member:added", "column:created", "member:removed"]);

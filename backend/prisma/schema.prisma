@@ -8,12 +8,13 @@ datasource db {
 }
 
 model Board {
-  id         String       @id @default(cuid())
-  title      String
-  createdAt  DateTime     @default(now())
-  columns    Column[]
-  activities Activity[]
-  members    Membership[]
+  id          String       @id @default(cuid())
+  title       String
+  createdAt   DateTime     @default(now())
+  columns     Column[]
+  activities  Activity[]
+  members     Membership[]
+  invitations Invitation[]
 }
 
 model Column {
@@ -64,6 +65,7 @@ model User {
   sessions     Session[]
   memberships  Membership[]
   activities   Activity[]
+  invitations  Invitation[]
 }
 
 model Session {
@@ -85,4 +87,17 @@ model Membership {
 
   @@id([boardId, userId])
   @@index([userId])
+}
+
+model Invitation {
+  id          String   @id @default(cuid())
+  boardId     String
+  board       Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  email       String
+  invitedById String
+  invitedBy   User     @relation(fields: [invitedById], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([boardId, email])
+  @@index([email])
 }

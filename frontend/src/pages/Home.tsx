@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { boardsApi, columnsApi, type Board } from "../api";
+import { boardsApi, columnsApi, invitationsApi, type Board, type MyInvitation } from "../api";
 import { useAuth } from "../auth";
 import { KanflowBoardTile } from "../components/board";
-import { KanflowAppSidebar, KanflowBoardList, KanflowTemplateCard } from "../components/home";
+import { KanflowAppSidebar, KanflowBoardList, KanflowInvitationList, KanflowTemplateCard } from "../components/home";
 import {
   KanflowButton,
   KanflowConfirmDialog,
@@ -40,13 +40,34 @@ export function Home() {
   const [creating, setCreating] = useState(false);
   const [renaming, setRenaming] = useState<Board | null>(null);
   const [deleting, setDeleting] = useState<Board | null>(null);
+  const [invitations, setInvitations] = useState<MyInvitation[]>([]);
+  const [answering, setAnswering] = useState<string | null>(null);
 
   useEffect(() => {
     boardsApi
       .list()
       .then(setBoards)
       .catch((err) => setError(message(err)));
+    invitationsApi.mine().then(setInvitations, () => undefined);
   }, []);
+
+  async function answer(invitation: MyInvitation, accept: boolean) {
+    setAnswering(invitation.id);
+    setError("");
+    try {
+      if (accept) {
+        const board = await invitationsApi.accept(invitation.id);
+        navigate(`/boards/${board.id}`);
+        return;
+      }
+      await invitationsApi.decline(invitation.id);
+      setInvitations((list) => list.filter((i) => i.id !== invitation.id));
+    } catch (err) {
+      setError(`Não foi possível responder ao convite: ${message(err)}.`);
+      invitationsApi.mine().then(setInvitations, () => undefined);
+    }
+    setAnswering(null);
+  }
 
   function changeView(next: View) {
     setView(next);
@@ -111,6 +132,15 @@ export function Home() {
 
       <main className="home">
         <h1 className="home-title">Bem-vindo de volta, {firstName}</h1>
+
+        {invitations.length > 0 && (
+          <KanflowInvitationList
+            invitations={invitations}
+            busyId={answering}
+            onAccept={(i) => void answer(i, true)}
+            onDecline={(i) => void answer(i, false)}
+          />
+        )}
 
         <section className="home-panel" aria-labelledby="start-title">
           <header className="home-panel-header">

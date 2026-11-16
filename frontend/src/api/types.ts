@@ -30,6 +30,10 @@ export type BoardDetail = Board & { columns: ColumnWithCards[] };
 
 export type Member = User & { role: "owner" | "member" };
 
+export type Invitation = { id: string; email: string; createdAt: string };
+
+export type MyInvitation = { id: string; createdAt: string; board: { id: string; title: string }; invitedBy: string };
+
 export type Activity = {
   id: string;
   boardId: string;

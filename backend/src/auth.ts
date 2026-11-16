@@ -8,7 +8,7 @@ import { disconnectSession } from "./realtime.js";
 
 const scryptAsync = promisify(scrypt) as (password: string, salt: Buffer, keylen: number) => Promise<Buffer>;
 const SESSION_DAYS = 30;
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_PASSWORD = 200;
 
 const loginByIp = limiter(100, 15 * 60_000);

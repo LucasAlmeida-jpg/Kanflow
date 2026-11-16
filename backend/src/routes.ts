@@ -1,5 +1,5 @@
 import { Router, type ErrorRequestHandler, type Request, type RequestHandler, type Response } from "express";
-import { currentUser, requireAuth } from "./auth.js";
+import { currentUser, EMAIL, requireAuth } from "./auth.js";
 import { db } from "./db.js";
 import { apply, HttpError, isMember, text, toError, type OpType } from "./ops.js";
 import { broadcast, ownSocket, removeFromBoard } from "./realtime.js";
@@ -112,26 +112,86 @@ routes.get("/boards/:id/members", async (req, res) => {
   res.json(members.map((m) => ({ ...m.user, role: m.role })));
 });
 
-routes.post("/boards/:id/members", async (req, res) => {
-  const boardId = req.params.id;
+async function ownerOrThrow(res: Response, boardId: string, forbidden: string) {
   const me = await db.membership.findUnique({ where: { boardId_userId: { boardId, userId: currentUser(res).id } } });
   if (!me) throw new HttpError(404, "board não encontrado");
-  if (me.role !== "owner") throw new HttpError(403, "só o dono pode adicionar membros");
+  if (me.role !== "owner") throw new HttpError(403, forbidden);
+  return me;
+}
 
-  const user = await db.user.findUnique({ where: { email: text(req.body?.email, "email", 254).toLowerCase() } });
-  if (!user) throw new HttpError(404, "nenhuma conta com esse email; peça para a pessoa se cadastrar primeiro");
-  if (await db.membership.findUnique({ where: { boardId_userId: { boardId, userId: user.id } } })) {
-    throw new HttpError(409, `${user.name} já faz parte deste quadro`);
+const publicInvitation = (i: { id: string; email: string; createdAt: Date }) => ({ id: i.id, email: i.email, createdAt: i.createdAt });
+
+routes.get("/boards/:id/invitations", async (req, res) => {
+  await ownerOrThrow(res, req.params.id, "só o dono vê os convites pendentes");
+  const invitations = await db.invitation.findMany({ where: { boardId: req.params.id }, orderBy: { createdAt: "asc" } });
+  res.json(invitations.map(publicInvitation));
+});
+
+routes.post("/boards/:id/invitations", async (req, res) => {
+  const boardId = req.params.id;
+  const me = await ownerOrThrow(res, boardId, "só o dono pode convidar pessoas");
+  const email = text(req.body?.email, "email", 254).toLowerCase();
+  if (!EMAIL.test(email)) throw new HttpError(400, "email inválido");
+  if (await db.membership.findFirst({ where: { boardId, user: { email } } })) {
+    throw new HttpError(409, "essa pessoa já faz parte deste quadro");
   }
-  const member = { id: user.id, name: user.name, email: user.email, role: "member" as const };
+  const invitation = await db.invitation.upsert({
+    where: { boardId_email: { boardId, email } },
+    create: { boardId, email, invitedById: me.userId },
+    update: {},
+  });
+  res.status(201).json(publicInvitation(invitation));
+});
+
+routes.delete("/boards/:id/invitations/:invitationId", async (req, res) => {
+  await ownerOrThrow(res, req.params.id, "só o dono pode cancelar convites");
+  const { count } = await db.invitation.deleteMany({ where: { id: req.params.invitationId, boardId: req.params.id } });
+  if (!count) throw new HttpError(404, "convite não encontrado");
+  res.status(204).end();
+});
+
+routes.get("/invitations", async (_req, res) => {
+  const invitations = await db.invitation.findMany({
+    where: { email: currentUser(res).email },
+    orderBy: { createdAt: "desc" },
+    include: { board: { select: { id: true, title: true } }, invitedBy: { select: { name: true } } },
+  });
+  res.json(
+    invitations.map((i) => ({ id: i.id, createdAt: i.createdAt, board: i.board, invitedBy: i.invitedBy.name })),
+  );
+});
+
+async function myInvitationOr404(res: Response, id: string) {
+  const invitation = await db.invitation.findUnique({ where: { id } });
+  if (!invitation || invitation.email !== currentUser(res).email) throw new HttpError(404, "convite não encontrado");
+  return invitation;
+}
+
+routes.post("/invitations/:id/accept", async (req, res) => {
+  const invitation = await myInvitationOr404(res, req.params.id);
+  const user = currentUser(res);
+  const boardId = invitation.boardId;
+  const alreadyMember = await db.membership.findUnique({ where: { boardId_userId: { boardId, userId: user.id } } });
   await db.$transaction([
-    db.membership.create({ data: { boardId, userId: user.id, role: "member" } }),
-    db.activity.create({
-      data: { boardId, event: "member:added", entityId: user.id, actorId: me.userId, after: { id: user.id, name: user.name } },
-    }),
+    ...(alreadyMember
+      ? []
+      : [
+          db.membership.create({ data: { boardId, userId: user.id, role: "member" } }),
+          db.activity.create({
+            data: { boardId, event: "member:added", entityId: user.id, actorId: user.id, after: { id: user.id, name: user.name } },
+          }),
+        ]),
+    db.invitation.delete({ where: { id: invitation.id } }),
   ]);
-  broadcast(boardId, "member:added", member);
-  res.status(201).json(member);
+  if (!alreadyMember) broadcast(boardId, "member:added", { id: user.id, name: user.name, email: user.email, role: "member" });
+  const board = await db.board.findUniqueOrThrow({ where: { id: boardId }, select: { id: true, title: true } });
+  res.json(board);
+});
+
+routes.post("/invitations/:id/decline", async (req, res) => {
+  const invitation = await myInvitationOr404(res, req.params.id);
+  await db.invitation.delete({ where: { id: invitation.id } });
+  res.status(204).end();
 });
 
 routes.delete("/boards/:id/members/:userId", async (req, res) => {

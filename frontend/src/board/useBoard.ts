@@ -1,6 +1,6 @@
 import { generateKeyBetween } from "fractional-indexing";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
-import { ApiError, boardsApi, type Card, type Column, type ColumnWithCards, type Member } from "../api";
+import { ApiError, boardsApi, type Card, type Column, type ColumnWithCards, type Invitation, type Member } from "../api";
 import { connectSocket, joinBoard, sendOp, type BoardSocket, type OpResult, type OpType } from "../api/socket";
 import { boardReducer, findCard, type BoardState } from "./boardReducer";
 import {
@@ -40,6 +40,7 @@ function cardContent(card: Card) {
 export function useBoard(boardId: string, currentUserId?: string) {
   const [board, dispatch] = useReducer(boardReducer, null);
   const [members, setMembers] = useState<Member[]>([]);
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [error, setError] = useState("");
   const [status, setStatus] = useState<ConnectionStatus>("connecting");
   const [notice, setNotice] = useState<string | null>(null);
@@ -393,17 +394,39 @@ export function useBoard(boardId: string, currentUserId?: string) {
     [exec, isPending, record, restore],
   );
 
+  const loadInvitations = useCallback(async () => {
+    try {
+      setInvitations(await boardsApi.invitations(boardId));
+    } catch {
+      setInvitations([]);
+    }
+  }, [boardId]);
+
   const inviteMember = useCallback(
     async (email: string): Promise<string | null> => {
       try {
-        const member = await boardsApi.addMember(boardId, email);
-        setMembers((list) => (list.some((m) => m.id === member.id) ? list : [...list, member]));
+        const invitation = await boardsApi.invite(boardId, email);
+        setInvitations((list) => (list.some((i) => i.id === invitation.id) ? list : [...list, invitation]));
         return null;
       } catch (err) {
         return err instanceof ApiError ? err.message : "erro inesperado";
       }
     },
     [boardId],
+  );
+
+  const cancelInvitation = useCallback(
+    async (invitationId: string) => {
+      const snapshot = invitations;
+      setInvitations((list) => list.filter((i) => i.id !== invitationId));
+      try {
+        await boardsApi.cancelInvitation(boardId, invitationId);
+      } catch (err) {
+        setInvitations(snapshot);
+        setNotice(`Não foi possível cancelar o convite: ${err instanceof Error ? err.message : "erro inesperado"}.`);
+      }
+    },
+    [boardId, invitations],
   );
 
   const removeMember = useCallback(
@@ -428,7 +451,10 @@ export function useBoard(boardId: string, currentUserId?: string) {
   return {
     board,
     members,
+    invitations,
+    loadInvitations,
     inviteMember,
+    cancelInvitation,
     removeMember,
     error,
     status,

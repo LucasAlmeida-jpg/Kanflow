@@ -132,6 +132,68 @@
   letter-spacing: -0.02em;
 }
 
+.home-invites {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.home-invites h2 {
+  font-size: 20px;
+  line-height: 28px;
+}
+
+.invite-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.ui-card.invite-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  border-color: var(--primary);
+  border-radius: var(--radius-lg);
+}
+
+.invite-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  background: var(--primary-soft);
+  color: var(--text-primary);
+}
+
+.invite-text {
+  flex: 1;
+  min-width: 220px;
+  display: grid;
+  gap: 2px;
+  color: var(--text);
+}
+
+.invite-text strong {
+  color: var(--text-highlighted);
+  font-weight: 600;
+}
+
+.invite-time {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-muted);
+}
+
+.invite-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
 .home-panel {
   display: grid;
   gap: var(--space-4);

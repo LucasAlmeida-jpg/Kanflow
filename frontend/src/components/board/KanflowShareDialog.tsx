@@ -1,13 +1,16 @@
 import { useState, type SubmitEvent } from "react";
-import type { Member } from "../../api";
+import type { Invitation, Member } from "../../api";
+import { timeAgo } from "../../board/activity";
 import { KanflowAvatar, KanflowButton, KanflowConfirmDialog, KanflowDialog, KanflowIcon, KanflowInput } from "../ui";
 
 type KanflowShareDialogProps = {
   open: boolean;
   boardTitle: string;
   members: Member[];
+  invitations: Invitation[];
   currentUserId: string;
   onInvite: (email: string) => Promise<string | null>;
+  onCancelInvitation: (invitationId: string) => void;
   onRemove: (member: Member) => void;
   onLeave: () => void;
   onClose: () => void;
@@ -17,8 +20,10 @@ export function KanflowShareDialog({
   open,
   boardTitle,
   members,
+  invitations,
   currentUserId,
   onInvite,
+  onCancelInvitation,
   onRemove,
   onLeave,
   onClose,
@@ -42,7 +47,7 @@ export function KanflowShareDialog({
     const failure = await onInvite(value);
     setBusy(false);
     if (failure) return setError(failure.charAt(0).toUpperCase() + failure.slice(1) + ".");
-    setSent(`${value} agora faz parte do quadro.`);
+    setSent(`Convite enviado para ${value}. A pessoa entra no quadro quando aceitar.`);
     setEmail("");
   }
 
@@ -56,7 +61,7 @@ export function KanflowShareDialog({
             <KanflowInput
               type="email"
               label="Convidar por email"
-              hint="A pessoa precisa ter uma conta no Kanflow."
+              hint="A pessoa vê o convite ao entrar no Kanflow, mesmo que ainda não tenha conta."
               placeholder="nome@empresa.com"
               value={email}
               onChange={(e) => {
@@ -81,6 +86,30 @@ export function KanflowShareDialog({
             <KanflowIcon name="checkmark-circle" />
             {sent}
           </p>
+        )}
+
+        {isOwner && invitations.length > 0 && (
+          <section className="share-members" aria-labelledby="share-pending-title">
+            <h3 id="share-pending-title" className="share-members-title">
+              {invitations.length} {invitations.length === 1 ? "convite pendente" : "convites pendentes"}
+            </h3>
+            <ul className="share-list">
+              {invitations.map((i) => (
+                <li key={i.id} className="share-row">
+                  <span className="avatar avatar-md share-pending-icon" aria-hidden="true">
+                    <KanflowIcon name="envelope" />
+                  </span>
+                  <span className="share-person">
+                    <span className="share-name">{i.email}</span>
+                    <span className="share-email">Convidado {timeAgo(i.createdAt)}</span>
+                  </span>
+                  <KanflowButton variant="ghost" size="sm" aria-label={`Cancelar convite de ${i.email}`} onClick={() => onCancelInvitation(i.id)}>
+                    Cancelar
+                  </KanflowButton>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
 
         <section className="share-members" aria-labelledby="share-members-title">

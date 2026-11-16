@@ -7,7 +7,9 @@ import type {
   CardMove,
   CardPatch,
   Column,
+  Invitation,
   Member,
+  MyInvitation,
   Session,
   User,
 } from "./types";
@@ -28,8 +30,16 @@ export const boardsApi = {
   remove: (id: string) => request<void>("DELETE", `/boards/${id}`),
   activity: (id: string, limit = 50) => request<Activity[]>("GET", `/boards/${id}/activity?limit=${limit}`),
   members: (id: string) => request<Member[]>("GET", `/boards/${id}/members`),
-  addMember: (id: string, email: string) => request<Member>("POST", `/boards/${id}/members`, { email }),
+  invitations: (id: string) => request<Invitation[]>("GET", `/boards/${id}/invitations`),
+  invite: (id: string, email: string) => request<Invitation>("POST", `/boards/${id}/invitations`, { email }),
+  cancelInvitation: (id: string, invitationId: string) => request<void>("DELETE", `/boards/${id}/invitations/${invitationId}`),
   removeMember: (id: string, userId: string) => request<void>("DELETE", `/boards/${id}/members/${userId}`),
+};
+
+export const invitationsApi = {
+  mine: () => request<MyInvitation[]>("GET", "/invitations"),
+  accept: (id: string) => request<{ id: string; title: string }>("POST", `/invitations/${id}/accept`),
+  decline: (id: string) => request<void>("POST", `/invitations/${id}/decline`),
 };
 
 export const columnsApi = {
