@@ -1,6 +1,6 @@
 import type { Activity } from "../api";
 
-type Snapshot = { title?: string; columnId?: string; description?: string } | null;
+type Snapshot = { id?: string; name?: string; title?: string; columnId?: string; description?: string } | null;
 
 const relative = new Intl.RelativeTimeFormat("pt-BR", { numeric: "auto" });
 const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
@@ -31,6 +31,10 @@ export function describeActivity(activity: Activity, columnName: (id: string | u
       return `reordenou o card "${after?.title}" em ${columnName(after?.columnId)}`;
     case "card:deleted":
       return `apagou o card "${before?.title}"`;
+    case "member:added":
+      return `adicionou ${after?.name} ao quadro`;
+    case "member:removed":
+      return activity.actor?.id === before?.id ? "saiu do quadro" : `removeu ${before?.name} do quadro`;
     case "board:updated":
       return `renomeou o quadro "${before?.title}" para "${after?.title}"`;
     case "column:created":

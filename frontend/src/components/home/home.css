@@ -92,19 +92,6 @@
   border-top: 1px solid var(--border);
 }
 
-.avatar {
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-full);
-  background: var(--primary);
-  color: var(--on-primary);
-  font-size: 12px;
-  font-weight: 600;
-}
-
 .app-sidebar-user-text {
   flex: 1;
   min-width: 0;

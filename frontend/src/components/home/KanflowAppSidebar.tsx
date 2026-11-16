@@ -1,20 +1,12 @@
 import { Link } from "react-router";
 import type { User } from "../../api";
-import { KanflowButton, KanflowIcon, KanflowLogo } from "../ui";
+import { KanflowAvatar, KanflowButton, KanflowIcon, KanflowLogo } from "../ui";
 
 type KanflowAppSidebarProps = {
   user: User;
   onNewBoard: () => void;
   onLogout: () => void;
 };
-
-const initials = (name: string) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]!.toUpperCase())
-    .join("");
 
 export function KanflowAppSidebar({ user, onNewBoard, onLogout }: KanflowAppSidebarProps) {
   return (
@@ -50,9 +42,7 @@ export function KanflowAppSidebar({ user, onNewBoard, onLogout }: KanflowAppSide
       </div>
 
       <div className="app-sidebar-user">
-        <span className="avatar" aria-hidden="true">
-          {initials(user.name)}
-        </span>
+        <KanflowAvatar name={user.name} highlight />
         <span className="app-sidebar-user-text">
           <span className="app-sidebar-user-name">{user.name}</span>
           <span className="app-sidebar-user-email">{user.email}</span>

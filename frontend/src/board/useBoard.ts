@@ -1,6 +1,6 @@
 import { generateKeyBetween } from "fractional-indexing";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
-import { boardsApi, type Card, type Column, type ColumnWithCards } from "../api";
+import { ApiError, boardsApi, type Card, type Column, type ColumnWithCards, type Member } from "../api";
 import { connectSocket, joinBoard, sendOp, type BoardSocket, type OpResult, type OpType } from "../api/socket";
 import { boardReducer, findCard, type BoardState } from "./boardReducer";
 import {
@@ -37,8 +37,9 @@ function cardContent(card: Card) {
   return { id: card.id, title: card.title, description: card.description };
 }
 
-export function useBoard(boardId: string) {
+export function useBoard(boardId: string, currentUserId?: string) {
   const [board, dispatch] = useReducer(boardReducer, null);
+  const [members, setMembers] = useState<Member[]>([]);
   const [error, setError] = useState("");
   const [status, setStatus] = useState<ConnectionStatus>("connecting");
   const [notice, setNotice] = useState<string | null>(null);
@@ -72,7 +73,9 @@ export function useBoard(boardId: string) {
 
   const reload = useCallback(async () => {
     try {
-      dispatch({ type: "load", board: await boardsApi.get(boardId) });
+      const [fresh, people] = await Promise.all([boardsApi.get(boardId), boardsApi.members(boardId)]);
+      dispatch({ type: "load", board: fresh });
+      setMembers(people);
     } catch (err) {
       setError(err instanceof Error ? err.message : "erro inesperado");
     }
@@ -84,9 +87,12 @@ export function useBoard(boardId: string) {
     let alive = true;
     let connectedBefore = false;
 
-    boardsApi
-      .get(boardId)
-      .then((fresh) => alive && dispatch({ type: "load", board: fresh }))
+    Promise.all([boardsApi.get(boardId), boardsApi.members(boardId)])
+      .then(([fresh, people]) => {
+        if (!alive) return;
+        dispatch({ type: "load", board: fresh });
+        setMembers(people);
+      })
       .catch((err) => alive && setError(err instanceof Error ? err.message : "erro inesperado"));
 
     socket.on("connect", async () => {
@@ -108,6 +114,16 @@ export function useBoard(boardId: string) {
     });
     socket.on("board:updated", ({ title }) => dispatch({ type: "boardUpdate", title }));
     socket.on("board:deleted", () => alive && setError("Este quadro foi apagado pelo dono."));
+    socket.on("member:added", (member) => setMembers((list) => (list.some((m) => m.id === member.id) ? list : [...list, member])));
+    socket.on("member:removed", ({ id }) => {
+      if (!alive) return;
+      if (id === currentUserId) {
+        setError("Você não faz mais parte deste quadro.");
+        socket.disconnect();
+        return;
+      }
+      setMembers((list) => list.filter((m) => m.id !== id));
+    });
     socket.on("column:created", (column) => dispatch({ type: "columnUpsert", column }));
     socket.on("column:deleted", ({ id }) => dispatch({ type: "columnRemove", id }));
     socket.on("card:created", (card) => dispatch({ type: "cardUpsert", card }));
@@ -120,7 +136,7 @@ export function useBoard(boardId: string) {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [boardId, reload]);
+  }, [boardId, currentUserId, reload]);
 
   useEffect(() => {
     if (!notice) return;
@@ -377,11 +393,43 @@ export function useBoard(boardId: string) {
     [exec, isPending, record, restore],
   );
 
+  const inviteMember = useCallback(
+    async (email: string): Promise<string | null> => {
+      try {
+        const member = await boardsApi.addMember(boardId, email);
+        setMembers((list) => (list.some((m) => m.id === member.id) ? list : [...list, member]));
+        return null;
+      } catch (err) {
+        return err instanceof ApiError ? err.message : "erro inesperado";
+      }
+    },
+    [boardId],
+  );
+
+  const removeMember = useCallback(
+    async (userId: string): Promise<boolean> => {
+      const snapshot = members;
+      setMembers((list) => list.filter((m) => m.id !== userId));
+      try {
+        await boardsApi.removeMember(boardId, userId);
+        return true;
+      } catch (err) {
+        setMembers(snapshot);
+        setNotice(`Não foi possível remover: ${err instanceof Error ? err.message : "erro inesperado"}.`);
+        return false;
+      }
+    },
+    [boardId, members],
+  );
+
   const lastPast = history.past[history.past.length - 1];
   const lastFuture = history.future[history.future.length - 1];
 
   return {
     board,
+    members,
+    inviteMember,
+    removeMember,
     error,
     status,
     notice,

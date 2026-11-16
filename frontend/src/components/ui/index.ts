@@ -1,5 +1,6 @@
 import "./ui.css";
 
+export { KanflowAvatar } from "./KanflowAvatar";
 export { KanflowButton } from "./KanflowButton";
 export { KanflowCard } from "./KanflowCard";
 export { KanflowConfirmDialog } from "./KanflowConfirmDialog";

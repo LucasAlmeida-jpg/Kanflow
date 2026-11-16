@@ -149,6 +149,34 @@
   white-space: nowrap;
 }
 
+.avatar {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-full);
+  background: var(--bg-accented);
+  color: var(--text-highlighted);
+  font-weight: 600;
+  user-select: none;
+}
+
+.avatar-md {
+  width: 32px;
+  height: 32px;
+  font-size: 12px;
+}
+
+.avatar-sm {
+  width: 26px;
+  height: 26px;
+  font-size: 10px;
+}
+
+.avatar-highlight {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
 .field {
   display: grid;
   gap: var(--space-1);
