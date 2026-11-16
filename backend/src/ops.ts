@@ -19,9 +19,19 @@ export function toError(err: any): ErrorBody {
   return { status: 500, error: "erro interno" };
 }
 
-export function text(v: unknown, field: string): string {
+export function text(v: unknown, field: string, max = 200): string {
   if (typeof v !== "string" || !v.trim()) throw new HttpError(400, `${field} é obrigatório`);
-  return v.trim();
+  const value = v.trim();
+  if (value.length > max) throw new HttpError(400, `${field} pode ter no máximo ${max} caracteres`);
+  return value;
+}
+
+export const MAX_DESCRIPTION = 10_000;
+
+function description(v: unknown): string | undefined {
+  if (typeof v !== "string") return undefined;
+  if (v.length > MAX_DESCRIPTION) throw new HttpError(400, `description pode ter no máximo ${MAX_DESCRIPTION} caracteres`);
+  return v;
 }
 
 type Tx = Prisma.TransactionClient;
@@ -87,7 +97,7 @@ export const ops = {
     const card = await tx.card.create({
       data: {
         title,
-        description: typeof p.description === "string" ? p.description : "",
+        description: description(p.description) ?? "",
         columnId: column.id,
         position: generateKeyBetween(await lastPosition(tx, { columnId: column.id }), null),
       },
@@ -100,7 +110,8 @@ export const ops = {
     checkVersion(p, before);
     const data: { title?: string; description?: string } = {};
     if (p.title !== undefined) data.title = text(p.title, "title");
-    if (typeof p.description === "string") data.description = p.description;
+    const desc = description(p.description);
+    if (desc !== undefined) data.description = desc;
     const card = await tx.card.update({ where: { id: before.id }, data: { ...data, version: { increment: 1 } } });
     return { boardId, event: "card:updated", entityId: card.id, before, data: card, result: card };
   },

@@ -1,6 +1,7 @@
 import { Server } from "socket.io";
-import { userFromToken } from "./auth.js";
+import { sessionFromToken } from "./auth.js";
 import { db } from "./db.js";
+import { limiter } from "./limit.js";
 import { apply, isMember, isOpType, toError, type ErrorBody } from "./ops.js";
 
 export const io = new Server({ cors: { origin: "*" } });
@@ -11,6 +12,8 @@ type OpResult = { opId: string; ok: true; result: unknown } | ({ opId: string; o
 
 const recentOps = new Map<string, Promise<OpResult>>();
 const MAX_RECENT_OPS = 1000;
+const opsByUser = limiter(100, 10_000);
+const sessionRoom = (sessionId: string) => `session:${sessionId}`;
 
 async function execute(key: string, opId: string, type: unknown, payload: unknown, socketId: string, userId: string): Promise<OpResult> {
   if (!isOpType(type)) return { opId, ok: false, status: 400, error: "op desconhecida" };
@@ -25,14 +28,16 @@ async function execute(key: string, opId: string, type: unknown, payload: unknow
 }
 
 io.use(async (socket, next) => {
-  const user = await userFromToken(socket.handshake.auth?.token);
-  if (!user) return next(new Error("não autenticado"));
-  socket.data.user = user;
+  const session = await sessionFromToken(socket.handshake.auth?.token);
+  if (!session) return next(new Error("não autenticado"));
+  socket.data.user = session.user;
+  socket.data.sessionId = session.id;
   next();
 });
 
 io.on("connection", (socket) => {
   const userId: string = socket.data.user.id;
+  void socket.join(sessionRoom(socket.data.sessionId));
 
   socket.on("board:join", async (boardId: unknown, ack?: (res: object) => void) => {
     if (typeof boardId !== "string" || !(await isMember(db, boardId, userId))) {
@@ -50,6 +55,7 @@ io.on("connection", (socket) => {
     if (typeof ack !== "function") return;
     const opId = msg?.opId;
     if (typeof opId !== "string" || !opId) return ack({ opId: "", ok: false, status: 400, error: "opId é obrigatório" });
+    if (opsByUser(userId)) return ack({ opId, ok: false, status: 429, error: "muitas operações, aguarde um pouco" });
 
     const key = `${userId}:${opId}`;
     let pending = recentOps.get(key);
@@ -61,6 +67,10 @@ io.on("connection", (socket) => {
     ack(await pending);
   });
 });
+
+export function disconnectSession(sessionId: string) {
+  io.in(sessionRoom(sessionId)).disconnectSockets(true);
+}
 
 export function ownSocket(socketId: string | undefined, userId: string) {
   if (!socketId) return undefined;
