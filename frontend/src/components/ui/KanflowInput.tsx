@@ -1,16 +1,16 @@
 import type { ComponentPropsWithRef, ReactNode } from "react";
 import { cx } from "./cx";
-import { Field } from "./Field";
+import { KanflowField } from "./KanflowField";
 
-type InputProps = ComponentPropsWithRef<"input"> & {
+type KanflowInputProps = ComponentPropsWithRef<"input"> & {
   label?: ReactNode;
   hint?: ReactNode;
   error?: ReactNode;
 };
 
-export function Input({ label, hint, error, id, className, ...rest }: InputProps) {
+export function KanflowInput({ label, hint, error, id, className, ...rest }: KanflowInputProps) {
   return (
-    <Field label={label} hint={hint} error={error} id={id}>
+    <KanflowField label={label} hint={hint} error={error} id={id}>
       {({ id, describedBy, invalid }) => (
         <input
           id={id}
@@ -20,6 +20,6 @@ export function Input({ label, hint, error, id, className, ...rest }: InputProps
           {...rest}
         />
       )}
-    </Field>
+    </KanflowField>
   );
 }

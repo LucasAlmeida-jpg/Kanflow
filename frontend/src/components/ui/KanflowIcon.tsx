@@ -2,13 +2,13 @@ import type { ComponentPropsWithoutRef } from "react";
 import { cx } from "./cx";
 import type { IconName } from "./icon-names";
 
-type IconProps = Omit<ComponentPropsWithoutRef<"span">, "children"> & {
+type KanflowIconProps = Omit<ComponentPropsWithoutRef<"span">, "children"> & {
   name: IconName;
   size?: number;
   label?: string;
 };
 
-export function Icon({ name, size, label, className, style, ...rest }: IconProps) {
+export function KanflowIcon({ name, size, label, className, style, ...rest }: KanflowIconProps) {
   return (
     <span
       className={cx("lnr", `lnr-${name}`, "icon", className)}

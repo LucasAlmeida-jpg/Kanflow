@@ -1,6 +1,6 @@
 import { useState, type SubmitEvent } from "react";
 import { useAuth } from "../auth";
-import { Button, Card, Input } from "../components/ui";
+import { KanflowButton, KanflowCard, KanflowInput } from "../components/ui";
 
 export function Login() {
   const { login, register } = useAuth();
@@ -29,14 +29,14 @@ export function Login() {
 
   return (
     <main className="auth">
-      <Card as="form" variant="muted" padding="lg" className="auth-card" onSubmit={submit}>
+      <KanflowCard as="form" variant="muted" padding="lg" className="auth-card" onSubmit={submit}>
         <h1 className="brand">Kanflow</h1>
         <p className="muted">{isLogin ? "Entre na sua conta" : "Crie sua conta"}</p>
 
         {!isLogin && (
-          <Input label="Nome" value={name} onChange={(e) => setName(e.target.value)} required autoComplete="name" />
+          <KanflowInput label="Nome" value={name} onChange={(e) => setName(e.target.value)} required autoComplete="name" />
         )}
-        <Input
+        <KanflowInput
           label="Email"
           type="email"
           value={email}
@@ -44,7 +44,7 @@ export function Login() {
           required
           autoComplete="email"
         />
-        <Input
+        <KanflowInput
           label="Senha"
           type="password"
           value={password}
@@ -61,13 +61,13 @@ export function Login() {
           </p>
         )}
 
-        <Button type="submit" variant="primary" block loading={busy}>
+        <KanflowButton type="submit" variant="primary" block loading={busy}>
           {isLogin ? "Entrar" : "Criar conta"}
-        </Button>
-        <Button variant="ghost" onClick={() => setMode(isLogin ? "register" : "login")}>
+        </KanflowButton>
+        <KanflowButton variant="ghost" onClick={() => setMode(isLogin ? "register" : "login")}>
           {isLogin ? "Não tem conta? Cadastre-se" : "Já tem conta? Entrar"}
-        </Button>
-      </Card>
+        </KanflowButton>
+      </KanflowCard>
     </main>
   );
 }

@@ -1,7 +1,7 @@
 import "./ui.css";
 
-export { Button } from "./Button";
-export { Card } from "./Card";
-export { Icon, type IconName } from "./Icon";
-export { Input } from "./Input";
-export { Select } from "./Select";
+export { KanflowButton } from "./KanflowButton";
+export { KanflowCard } from "./KanflowCard";
+export { KanflowIcon, type IconName } from "./KanflowIcon";
+export { KanflowInput } from "./KanflowInput";
+export { KanflowSelect } from "./KanflowSelect";

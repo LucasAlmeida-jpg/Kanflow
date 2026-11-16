@@ -1,21 +1,21 @@
 import type { ComponentPropsWithoutRef, ElementType } from "react";
 import { cx } from "./cx";
 
-type CardProps<T extends ElementType> = {
+type KanflowCardProps<T extends ElementType> = {
   as?: T;
   variant?: "default" | "muted";
   padding?: "none" | "sm" | "md" | "lg";
   interactive?: boolean;
 } & Omit<ComponentPropsWithoutRef<T>, "as">;
 
-export function Card<T extends ElementType = "div">({
+export function KanflowCard<T extends ElementType = "div">({
   as,
   variant = "default",
   padding = "md",
   interactive = false,
   className,
   ...rest
-}: CardProps<T>) {
+}: KanflowCardProps<T>) {
   const Tag: ElementType = as ?? "div";
   return (
     <Tag

@@ -1,10 +1,10 @@
 import type { ComponentPropsWithRef, ReactNode } from "react";
 import { cx } from "./cx";
-import { Field } from "./Field";
+import { KanflowField } from "./KanflowField";
 
 type Option = { value: string; label: string; disabled?: boolean };
 
-type SelectProps = Omit<ComponentPropsWithRef<"select">, "children"> & {
+type KanflowSelectProps = Omit<ComponentPropsWithRef<"select">, "children"> & {
   label?: ReactNode;
   hint?: ReactNode;
   error?: ReactNode;
@@ -12,9 +12,9 @@ type SelectProps = Omit<ComponentPropsWithRef<"select">, "children"> & {
   placeholder?: string;
 };
 
-export function Select({ label, hint, error, id, className, options, placeholder, ...rest }: SelectProps) {
+export function KanflowSelect({ label, hint, error, id, className, options, placeholder, ...rest }: KanflowSelectProps) {
   return (
-    <Field label={label} hint={hint} error={error} id={id}>
+    <KanflowField label={label} hint={hint} error={error} id={id}>
       {({ id, describedBy, invalid }) => (
         <div className="select">
           <select
@@ -37,6 +37,6 @@ export function Select({ label, hint, error, id, className, options, placeholder
           </select>
         </div>
       )}
-    </Field>
+    </KanflowField>
   );
 }

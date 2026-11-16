@@ -1,6 +1,6 @@
 import { useId, type ReactNode } from "react";
 
-type FieldProps = {
+type KanflowFieldProps = {
   label?: ReactNode;
   hint?: ReactNode;
   error?: ReactNode;
@@ -8,7 +8,7 @@ type FieldProps = {
   children: (control: { id: string; describedBy: string | undefined; invalid: boolean }) => ReactNode;
 };
 
-export function Field({ label, hint, error, id, children }: FieldProps) {
+export function KanflowField({ label, hint, error, id, children }: KanflowFieldProps) {
   const autoId = useId();
   const controlId = id ?? autoId;
   const hintId = hint ? `${controlId}-hint` : undefined;

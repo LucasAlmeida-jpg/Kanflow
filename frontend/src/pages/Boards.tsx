@@ -1,7 +1,7 @@
 import { useEffect, useState, type SubmitEvent } from "react";
 import { Link } from "react-router";
 import { boardsApi, type Board } from "../api";
-import { Button, Card, Icon, Input } from "../components/ui";
+import { KanflowButton, KanflowCard, KanflowIcon, KanflowInput } from "../components/ui";
 
 export function Boards() {
   const [boards, setBoards] = useState<Board[] | null>(null);
@@ -36,17 +36,17 @@ export function Boards() {
       <h2>Seus quadros</h2>
 
       <form className="inline-form" onSubmit={create}>
-        <Input
+        <KanflowInput
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Nome do novo quadro"
           aria-label="Nome do novo quadro"
           maxLength={200}
         />
-        <Button type="submit" variant="primary" loading={creating}>
-          {!creating && <Icon name="plus-circle" />}
+        <KanflowButton type="submit" variant="primary" loading={creating}>
+          {!creating && <KanflowIcon name="plus-circle" />}
           Criar quadro
-        </Button>
+        </KanflowButton>
       </form>
 
       {error && (
@@ -63,9 +63,9 @@ export function Boards() {
         <ul className="board-grid">
           {boards.map((b) => (
             <li key={b.id}>
-              <Card as={Link} to={`/boards/${b.id}`} variant="muted" padding="lg" interactive className="board-tile">
+              <KanflowCard as={Link} to={`/boards/${b.id}`} variant="muted" padding="lg" interactive className="board-tile">
                 {b.title}
-              </Card>
+              </KanflowCard>
             </li>
           ))}
         </ul>

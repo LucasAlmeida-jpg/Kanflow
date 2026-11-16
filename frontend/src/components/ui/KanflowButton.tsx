@@ -1,14 +1,14 @@
 import type { ComponentPropsWithRef } from "react";
 import { cx } from "./cx";
 
-type ButtonProps = ComponentPropsWithRef<"button"> & {
+type KanflowButtonProps = ComponentPropsWithRef<"button"> & {
   variant?: "primary" | "secondary" | "ghost" | "danger";
   size?: "sm" | "md";
   loading?: boolean;
   block?: boolean;
 };
 
-export function Button({
+export function KanflowButton({
   variant = "secondary",
   size = "md",
   loading = false,
@@ -18,7 +18,7 @@ export function Button({
   className,
   children,
   ...rest
-}: ButtonProps) {
+}: KanflowButtonProps) {
   return (
     <button
       type={type}
