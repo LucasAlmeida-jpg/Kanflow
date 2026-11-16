@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import { boardsApi, type BoardDetail } from "../api";
-import { Card } from "../components/ui";
+import { Card, Icon } from "../components/ui";
 
 export function BoardView() {
   const { id } = useParams();
@@ -20,7 +20,10 @@ export function BoardView() {
         <p className="error" role="alert">
           {error}
         </p>
-        <Link to="/">Voltar para os quadros</Link>
+        <Link to="/" className="back-link">
+          <Icon name="arrow-left" />
+          Voltar para os quadros
+        </Link>
       </main>
     );
   }

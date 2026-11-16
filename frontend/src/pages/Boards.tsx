@@ -1,7 +1,7 @@
 import { useEffect, useState, type SubmitEvent } from "react";
 import { Link } from "react-router";
 import { boardsApi, type Board } from "../api";
-import { Button, Card, Input } from "../components/ui";
+import { Button, Card, Icon, Input } from "../components/ui";
 
 export function Boards() {
   const [boards, setBoards] = useState<Board[] | null>(null);
@@ -44,6 +44,7 @@ export function Boards() {
           maxLength={200}
         />
         <Button type="submit" variant="primary" loading={creating}>
+          {!creating && <Icon name="plus-circle" />}
           Criar quadro
         </Button>
       </form>
