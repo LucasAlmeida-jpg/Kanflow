@@ -3,14 +3,25 @@ import { io as connect, type Socket } from "socket.io-client";
 
 const B = process.env.API ?? "http://localhost:3001";
 
-async function call(method: string, path: string, body?: unknown, socketId?: string) {
+let token = "";
+
+async function call(method: string, path: string, body?: unknown, socketId?: string, as: string = token) {
   const res = await fetch(B + path, {
     method,
-    headers: { "content-type": "application/json", ...(socketId && { "x-socket-id": socketId }) },
+    headers: {
+      "content-type": "application/json",
+      ...(as && { authorization: `Bearer ${as}` }),
+      ...(socketId && { "x-socket-id": socketId }),
+    },
     body: body ? JSON.stringify(body) : null,
   });
   return { status: res.status, data: res.status === 204 ? null : await res.json() };
 }
+
+const email = `smoke-${crypto.randomUUID()}@kanflow.dev`;
+const registered = await call("POST", "/auth/register", { email, name: "Smoke", password: "senha-segura" });
+assert.equal(registered.status, 201);
+token = registered.data.token;
 
 const board = (await call("POST", "/boards", { title: "Smoke" })).data;
 const todo = (await call("POST", `/boards/${board.id}/columns`, { title: "A fazer" })).data;
@@ -54,8 +65,8 @@ assert.equal((await call("POST", "/columns/nao-existe/cards", { title: "x" })).s
 assert.equal((await call("DELETE", `/cards/${c1.id}`)).status, 204);
 assert.equal((await call("PATCH", `/cards/${c1.id}`, { title: "x" })).status, 404);
 
-async function client() {
-  const socket = connect(B, { transports: ["websocket"] });
+async function client(as: string = token) {
+  const socket = connect(B, { transports: ["websocket"], auth: { token: as } });
   await new Promise((ok) => socket.once("connect", () => ok(null)));
   const events: [string, any][] = [];
   socket.onAny((event, data) => events.push([event, data]));
@@ -171,7 +182,64 @@ assert.equal(log[0].after, null);
 assert.equal(log[1].before.title, "Editado via socket");
 assert.equal(log[1].after.title, "Versão 4");
 assert.equal((await call("GET", `/boards/${rt.id}/activity`)).data.length, 13);
-assert.deepEqual((await call("GET", `/boards/nao-existe/activity`)).data, []);
+assert.equal((await call("GET", `/boards/nao-existe/activity`)).status, 404);
 
-[a, b, c, d, outsider].forEach((x) => x.socket.disconnect());
+assert.equal((await call("GET", "/boards", undefined, undefined, "")).status, 401);
+assert.equal((await call("GET", "/boards", undefined, undefined, "token-falso")).status, 401);
+assert.equal((await call("GET", "/me")).data.email, email);
+assert.equal((await call("POST", "/auth/register", { email, name: "X", password: "senha-segura" })).status, 409);
+assert.equal((await call("POST", "/auth/register", { email: "x@y.z", name: "X", password: "curta" })).status, 400);
+assert.equal((await call("POST", "/auth/register", { email: "invalido", name: "X", password: "senha-segura" })).status, 400);
+assert.equal((await call("POST", "/auth/login", { email, password: "errada!!" })).status, 401);
+assert.equal((await call("POST", "/auth/login", { email: "ninguem@x.com", password: "senha-segura" })).status, 401);
+const login = await call("POST", "/auth/login", { email: email.toUpperCase(), password: "senha-segura" });
+assert.equal(login.status, 200);
+assert.equal((await call("GET", "/me", undefined, undefined, login.data.token)).data.email, email);
+
+const noAuth = connect(B, { transports: ["websocket"], auth: { token: "token-falso" } });
+const refused = await new Promise<Error>((ok) => noAuth.once("connect_error", ok));
+assert.equal(refused.message, "não autenticado");
+noAuth.close();
+
+const email2 = `smoke2-${crypto.randomUUID()}@kanflow.dev`;
+const token2 = (await call("POST", "/auth/register", { email: email2, name: "Outra Pessoa", password: "senha-segura" })).data.token;
+const e = await client(token2);
+const card = (await op("createCard", { columnId: col.id, title: "Privado" })).result;
+
+assert.deepEqual((await call("GET", "/boards", undefined, undefined, token2)).data, []);
+assert.equal((await call("GET", `/boards/${rt.id}`, undefined, undefined, token2)).status, 404);
+assert.equal((await call("GET", `/boards/${rt.id}/activity`, undefined, undefined, token2)).status, 404);
+assert.equal((await call("GET", `/boards/${rt.id}/members`, undefined, undefined, token2)).status, 404);
+assert.equal((await call("POST", `/boards/${rt.id}/columns`, { title: "x" }, undefined, token2)).status, 404);
+assert.deepEqual(await join(e.socket, rt.id), { error: "board não encontrado" });
+const peek = await e.socket.emitWithAck("op", { opId: "peek", type: "updateCard", payload: { id: card.id, title: "x", version: 99 } });
+assert.equal(peek.status, 404);
+assert.equal(peek.current, undefined);
+assert.equal((await e.socket.emitWithAck("op", { opId: "mv", type: "moveCard", payload: { id: card.id, columnId: col.id } })).status, 404);
+
+assert.equal((await call("POST", `/boards/${rt.id}/members`, { email: "ninguem@x.com" })).status, 404);
+const added = await call("POST", `/boards/${rt.id}/members`, { email: email2.toUpperCase() });
+assert.equal(added.status, 201);
+assert.equal(added.data.role, "member");
+assert.equal((await call("POST", `/boards/${rt.id}/members`, { email: email2 }, undefined, token2)).status, 403);
+assert.deepEqual((await call("GET", `/boards/${rt.id}/members`, undefined, undefined, token2)).data.map((m: any) => m.role), ["owner", "member"]);
+assert.deepEqual((await call("GET", "/boards", undefined, undefined, token2)).data.map((x: any) => x.id), [rt.id]);
+
+assert.deepEqual(await join(e.socket, rt.id), { ok: true });
+d.events.length = 0;
+const byOther = await e.socket.emitWithAck("op", { opId: "op-other", type: "updateCard", payload: { id: card.id, title: "Editado pela outra" } });
+assert.equal(byOther.ok, true);
+await call("PATCH", `/cards/${card.id}`, { title: "Via REST da outra" }, d.socket.id, token2);
+await settle();
+assert.deepEqual(d.events.map(([ev]) => ev), ["card:updated", "card:updated"]);
+assert.deepEqual(e.events.map(([ev, x]) => [ev, x.title]), [["card:updated", "Via REST da outra"]]);
+
+const [last] = (await call("GET", `/boards/${rt.id}/activity?limit=1`)).data;
+assert.equal(last.actor.name, "Outra Pessoa");
+
+assert.equal((await call("POST", "/auth/logout", undefined, undefined, login.data.token)).status, 204);
+assert.equal((await call("GET", "/me", undefined, undefined, login.data.token)).status, 401);
+assert.equal((await call("GET", "/me")).status, 200);
+
+[a, b, c, d, e, outsider].forEach((x) => x.socket.disconnect());
 console.log("smoke ok");

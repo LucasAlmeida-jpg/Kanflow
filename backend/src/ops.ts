@@ -37,15 +37,23 @@ export type Change = {
 
 const withBoard = { column: { select: { boardId: true } } } as const;
 
-async function columnOr404(tx: Tx, id: string) {
+export async function isMember(tx: Tx, boardId: string, userId: string) {
+  return !!(await tx.membership.findUnique({ where: { boardId_userId: { boardId, userId } } }));
+}
+
+async function boardOr404(tx: Tx, boardId: string, userId: string) {
+  if (!(await isMember(tx, boardId, userId))) throw new HttpError(404, "board não encontrado");
+}
+
+async function columnOr404(tx: Tx, id: string, userId: string) {
   const column = await tx.column.findUnique({ where: { id } });
-  if (!column) throw new HttpError(404, "coluna não encontrada");
+  if (!column || !(await isMember(tx, column.boardId, userId))) throw new HttpError(404, "coluna não encontrada");
   return column;
 }
 
-async function cardOr404(tx: Tx, id: string) {
+async function cardOr404(tx: Tx, id: string, userId: string) {
   const found = await tx.card.findUnique({ where: { id }, include: withBoard });
-  if (!found) throw new HttpError(404, "card não encontrado");
+  if (!found || !(await isMember(tx, found.column.boardId, userId))) throw new HttpError(404, "card não encontrado");
   const { column, ...card } = found;
   return { card, boardId: column.boardId };
 }
@@ -63,18 +71,19 @@ async function lastPosition(tx: Tx, where: { boardId: string } | { columnId: str
 }
 
 export const ops = {
-  async createColumn(tx: Tx, p: Input): Promise<Change> {
+  async createColumn(tx: Tx, p: Input, userId: string): Promise<Change> {
     const title = text(p.title, "title");
     const boardId = text(p.boardId, "boardId");
+    await boardOr404(tx, boardId, userId);
     const column = await tx.column.create({
       data: { title, boardId, position: generateKeyBetween(await lastPosition(tx, { boardId }), null) },
     });
     return { boardId, event: "column:created", entityId: column.id, before: null, data: column, result: column };
   },
 
-  async createCard(tx: Tx, p: Input): Promise<Change> {
+  async createCard(tx: Tx, p: Input, userId: string): Promise<Change> {
     const title = text(p.title, "title");
-    const column = await columnOr404(tx, text(p.columnId, "columnId"));
+    const column = await columnOr404(tx, text(p.columnId, "columnId"), userId);
     const card = await tx.card.create({
       data: {
         title,
@@ -86,8 +95,8 @@ export const ops = {
     return { boardId: column.boardId, event: "card:created", entityId: card.id, before: null, data: card, result: card };
   },
 
-  async updateCard(tx: Tx, p: Input): Promise<Change> {
-    const { card: before, boardId } = await cardOr404(tx, text(p.id, "id"));
+  async updateCard(tx: Tx, p: Input, userId: string): Promise<Change> {
+    const { card: before, boardId } = await cardOr404(tx, text(p.id, "id"), userId);
     checkVersion(p, before);
     const data: { title?: string; description?: string } = {};
     if (p.title !== undefined) data.title = text(p.title, "title");
@@ -96,14 +105,14 @@ export const ops = {
     return { boardId, event: "card:updated", entityId: card.id, before, data: card, result: card };
   },
 
-  async moveCard(tx: Tx, p: Input): Promise<Change> {
+  async moveCard(tx: Tx, p: Input, userId: string): Promise<Change> {
     const id = text(p.id, "id");
     const columnId = text(p.columnId, "columnId");
     const { beforeId, afterId } = p;
     if (beforeId === id || afterId === id) throw new HttpError(400, "card não pode ser vizinho de si mesmo");
 
-    const target = await columnOr404(tx, columnId);
-    const { card: before, boardId } = await cardOr404(tx, id);
+    const target = await columnOr404(tx, columnId, userId);
+    const { card: before, boardId } = await cardOr404(tx, id, userId);
     if (boardId !== target.boardId) throw new HttpError(400, "coluna de outro quadro");
     checkVersion(p, before);
 
@@ -128,8 +137,8 @@ export const ops = {
     return { boardId, event: "card:moved", entityId: id, before, data: card, result: card };
   },
 
-  async deleteCard(tx: Tx, p: Input): Promise<Change> {
-    const { card: before, boardId } = await cardOr404(tx, text(p.id, "id"));
+  async deleteCard(tx: Tx, p: Input, userId: string): Promise<Change> {
+    const { card: before, boardId } = await cardOr404(tx, text(p.id, "id"), userId);
     checkVersion(p, before);
     await tx.card.delete({ where: { id: before.id } });
     const data = { id: before.id, columnId: before.columnId };
@@ -142,14 +151,15 @@ export const isOpType = (t: unknown): t is OpType => typeof t === "string" && Ob
 
 const json = (v: unknown) => (v == null ? Prisma.DbNull : (JSON.parse(JSON.stringify(v)) as Prisma.InputJsonValue));
 
-export function apply(type: OpType, p: Input): Promise<Change> {
+export function apply(type: OpType, p: Input, userId: string): Promise<Change> {
   return db.$transaction(async (tx) => {
-    const change = await ops[type](tx, p);
+    const change = await ops[type](tx, p, userId);
     await tx.activity.create({
       data: {
         boardId: change.boardId,
         event: change.event,
         entityId: change.entityId,
+        actorId: userId,
         before: json(change.before),
         after: change.event === "card:deleted" ? Prisma.DbNull : json(change.data),
       },
