@@ -4,6 +4,7 @@ export type BoardState = BoardDetail | null;
 
 export type BoardAction =
   | { type: "load"; board: BoardDetail }
+  | { type: "boardUpdate"; title: string }
   | { type: "columnUpsert"; column: Column | ColumnWithCards }
   | { type: "columnRemove"; id: string }
   | { type: "cardUpsert"; card: Card; force?: boolean }
@@ -37,6 +38,9 @@ export function boardReducer(state: BoardState, action: BoardAction): BoardState
   if (!state) return state;
 
   switch (action.type) {
+    case "boardUpdate":
+      return { ...state, title: action.title };
+
     case "columnUpsert": {
       const existing = state.columns.find((c) => c.id === action.column.id);
       const cards = "cards" in action.column ? action.column.cards : (existing?.cards ?? []);

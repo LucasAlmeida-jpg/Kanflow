@@ -9,6 +9,8 @@ export type OpResult<T = unknown> =
   | { opId: string; ok: false; status: number; error: string; current?: unknown };
 
 export type ServerEvents = {
+  "board:updated": (data: { id: string; title: string }) => void;
+  "board:deleted": (data: { id: string }) => void;
   "column:created": (column: Column) => void;
   "column:deleted": (data: { id: string }) => void;
   "card:created": (card: Card) => void;

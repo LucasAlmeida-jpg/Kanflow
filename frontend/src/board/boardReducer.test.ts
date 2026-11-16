@@ -65,6 +65,12 @@ describe("boardReducer", () => {
     expect(findCard(across, "k1")?.column.id).toBe("doing");
   });
 
+  it("renomeia o quadro mantendo as colunas", () => {
+    const s = boardReducer(loaded, { type: "boardUpdate", title: "Novo nome" });
+    expect(s!.title).toBe("Novo nome");
+    expect(s!.columns).toBe(loaded!.columns);
+  });
+
   it("remove card e coluna", () => {
     const s = boardReducer(loaded, { type: "cardRemove", id: "k1" });
     expect(titles(s)[0]).toEqual(["todo", ["k2"]]);

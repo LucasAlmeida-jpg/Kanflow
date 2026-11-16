@@ -2,7 +2,7 @@ export type User = { id: string; email: string; name: string };
 
 export type Session = { token: string; user: User };
 
-export type Board = { id: string; title: string; createdAt: string };
+export type Board = { id: string; title: string; createdAt: string; role?: "owner" | "member" };
 
 export type Card = {
   id: string;

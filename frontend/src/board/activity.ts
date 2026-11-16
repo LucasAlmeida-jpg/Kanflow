@@ -31,6 +31,8 @@ export function describeActivity(activity: Activity, columnName: (id: string | u
       return `reordenou o card "${after?.title}" em ${columnName(after?.columnId)}`;
     case "card:deleted":
       return `apagou o card "${before?.title}"`;
+    case "board:updated":
+      return `renomeou o quadro "${before?.title}" para "${after?.title}"`;
     case "column:created":
       return `criou a coluna "${after?.title}"`;
     case "column:deleted":

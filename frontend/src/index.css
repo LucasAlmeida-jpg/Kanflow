@@ -200,14 +200,6 @@ a:focus-visible {
   gap: var(--space-3);
 }
 
-.board-tile {
-  font-weight: 500;
-}
-
-.ui-card.board-tile:hover {
-  border-color: var(--primary);
-}
-
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;

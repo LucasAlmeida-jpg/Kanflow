@@ -12,11 +12,13 @@ async function memberOr404(res: Response, boardId: string) {
 }
 
 routes.get("/boards", async (_req, res) => {
+  const userId = currentUser(res).id;
   const boards = await db.board.findMany({
-    where: { members: { some: { userId: currentUser(res).id } } },
+    where: { members: { some: { userId } } },
     orderBy: { createdAt: "asc" },
+    include: { members: { where: { userId }, select: { role: true } } },
   });
-  res.json(boards);
+  res.json(boards.map(({ members, ...board }) => ({ ...board, role: members[0]?.role })));
 });
 
 routes.post("/boards", async (req, res) => {
@@ -26,7 +28,41 @@ routes.post("/boards", async (req, res) => {
       members: { create: { userId: currentUser(res).id, role: "owner" } },
     },
   });
-  res.status(201).json(board);
+  res.status(201).json({ ...board, role: "owner" });
+});
+
+routes.patch("/boards/:id", async (req, res) => {
+  const boardId = req.params.id;
+  const userId = currentUser(res).id;
+  await memberOr404(res, boardId);
+  const title = text(req.body?.title, "title");
+  const board = await db.$transaction(async (tx) => {
+    const before = await tx.board.findUniqueOrThrow({ where: { id: boardId } });
+    const updated = await tx.board.update({ where: { id: boardId }, data: { title } });
+    await tx.activity.create({
+      data: {
+        boardId,
+        event: "board:updated",
+        entityId: boardId,
+        actorId: userId,
+        before: { title: before.title },
+        after: { title: updated.title },
+      },
+    });
+    return updated;
+  });
+  broadcast(boardId, "board:updated", { id: board.id, title: board.title }, ownSocket(req.get("x-socket-id"), userId));
+  res.json(board);
+});
+
+routes.delete("/boards/:id", async (req, res) => {
+  const boardId = req.params.id;
+  const me = await db.membership.findUnique({ where: { boardId_userId: { boardId, userId: currentUser(res).id } } });
+  if (!me) throw new HttpError(404, "board não encontrado");
+  if (me.role !== "owner") throw new HttpError(403, "só o dono pode apagar o quadro");
+  await db.board.delete({ where: { id: boardId } });
+  broadcast(boardId, "board:deleted", { id: boardId });
+  res.status(204).end();
 });
 
 routes.get("/boards/:id", async (req, res) => {

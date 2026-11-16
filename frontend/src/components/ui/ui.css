@@ -307,6 +307,11 @@
   align-content: start;
 }
 
+.dialog-form {
+  display: grid;
+  gap: var(--space-4);
+}
+
 .dialog-text {
   margin: 0;
   color: var(--text);

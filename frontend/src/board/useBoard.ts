@@ -106,6 +106,8 @@ export function useBoard(boardId: string) {
       setStatus("offline");
       if (err.message === "não autenticado") setError("Sua sessão expirou. Entre de novo.");
     });
+    socket.on("board:updated", ({ title }) => dispatch({ type: "boardUpdate", title }));
+    socket.on("board:deleted", () => alive && setError("Este quadro foi apagado pelo dono."));
     socket.on("column:created", (column) => dispatch({ type: "columnUpsert", column }));
     socket.on("column:deleted", ({ id }) => dispatch({ type: "columnRemove", id }));
     socket.on("card:created", (card) => dispatch({ type: "cardUpsert", card }));

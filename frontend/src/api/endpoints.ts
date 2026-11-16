@@ -24,6 +24,8 @@ export const boardsApi = {
   list: () => request<Board[]>("GET", "/boards"),
   get: (id: string) => request<BoardDetail>("GET", `/boards/${id}`),
   create: (title: string) => request<Board>("POST", "/boards", { title }),
+  update: (id: string, title: string) => request<Board>("PATCH", `/boards/${id}`, { title }),
+  remove: (id: string) => request<void>("DELETE", `/boards/${id}`),
   activity: (id: string, limit = 50) => request<Activity[]>("GET", `/boards/${id}/activity?limit=${limit}`),
   members: (id: string) => request<Member[]>("GET", `/boards/${id}/members`),
   addMember: (id: string, email: string) => request<Member>("POST", `/boards/${id}/members`, { email }),
