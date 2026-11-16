@@ -100,5 +100,43 @@ await settle();
 assert.equal(b.events.length, 6);
 assert.equal(a.events.length, 1);
 
-[a, b, outsider].forEach((c) => c.socket.disconnect());
+const c = await client();
+const d = await client();
+await join(c.socket, rt.id);
+await join(d.socket, rt.id);
+const op = (type: string, payload: unknown, opId: string = crypto.randomUUID()) =>
+  c.socket.emitWithAck("op", { opId, type, payload });
+
+const created = await op("createCard", { columnId: col.id, title: "Via socket" }, "op-1");
+assert.equal(created.ok, true);
+assert.equal(created.opId, "op-1");
+assert.equal(created.result.title, "Via socket");
+
+const again = await op("createCard", { columnId: col.id, title: "Via socket" }, "op-1");
+assert.deepEqual(again, created);
+
+const [p1, p2] = await Promise.all([
+  op("createCard", { columnId: col.id, title: "Paralelo" }, "op-2"),
+  op("createCard", { columnId: col.id, title: "Paralelo" }, "op-2"),
+]);
+assert.deepEqual(p1, p2);
+
+const moved = await op("moveCard", { id: created.result.id, columnId: col2.id });
+assert.equal(moved.ok, true);
+assert.equal(moved.result.columnId, col2.id);
+const updated = await op("updateCard", { id: created.result.id, title: "Editado via socket" });
+assert.equal(updated.result.version, 3);
+
+assert.deepEqual(await op("dropTable", {}, "op-x"), { opId: "op-x", ok: false, status: 400, error: "op desconhecida" });
+assert.deepEqual(await op("createCard", { columnId: col.id }, "op-y"), { opId: "op-y", ok: false, status: 400, error: "title é obrigatório" });
+assert.deepEqual(await op("updateCard", { id: "nao-existe", title: "x" }, "op-z"), { opId: "op-z", ok: false, status: 404, error: "não encontrado" });
+assert.equal((await c.socket.emitWithAck("op", { type: "createCard", payload: {} })).error, "opId é obrigatório");
+await settle();
+
+assert.deepEqual(d.events.map(([e]) => e), ["card:created", "card:created", "card:moved", "card:updated"]);
+assert.equal(c.events.length, 0);
+const rtBoard = (await call("GET", `/boards/${rt.id}`)).data;
+assert.deepEqual(rtBoard.columns.map((x: any) => x.cards.map((k: any) => k.title)), [["Paralelo"], ["Editado via socket"], []]);
+
+[a, b, c, d, outsider].forEach((x) => x.socket.disconnect());
 console.log("smoke ok");

@@ -1,32 +1,9 @@
-import { Router, type ErrorRequestHandler, type Request } from "express";
-import { generateKeyBetween } from "fractional-indexing";
+import { Router, type ErrorRequestHandler, type Request, type RequestHandler } from "express";
 import { db } from "./db.js";
+import { HttpError, ops, text, toError, type OpType } from "./ops.js";
 import { broadcast } from "./realtime.js";
 
 export const routes = Router();
-
-function text(v: unknown, field: string): string {
-  if (typeof v !== "string" || !v.trim()) throw new HttpError(400, `${field} é obrigatório`);
-  return v.trim();
-}
-
-function emit(req: Request, boardId: string, event: string, data: unknown) {
-  broadcast(boardId, event, data, req.get("x-socket-id"));
-}
-
-async function columnOr404(id: string) {
-  const column = await db.column.findUnique({ where: { id } });
-  if (!column) throw new HttpError(404, "coluna não encontrada");
-  return column;
-}
-
-const withBoard = { column: { select: { boardId: true } } } as const;
-
-class HttpError extends Error {
-  constructor(public status: number, message: string) {
-    super(message);
-  }
-}
 
 routes.get("/boards", async (_req, res) => {
   res.json(await db.board.findMany({ orderBy: { createdAt: "asc" } }));
@@ -51,101 +28,22 @@ routes.get("/boards/:id", async (req, res) => {
   res.json(board);
 });
 
-routes.post("/boards/:id/columns", async (req, res) => {
-  const title = text(req.body?.title, "title");
-  const last = await db.column.findFirst({
-    where: { boardId: req.params.id },
-    orderBy: { position: "desc" },
-  });
-  const column = await db.column.create({
-    data: { title, boardId: req.params.id, position: generateKeyBetween(last?.position ?? null, null) },
-  });
-  emit(req, column.boardId, "column:created", column);
-  res.status(201).json(column);
-});
+function run(op: OpType, input: (req: Request) => Record<string, unknown>, status = 200): RequestHandler {
+  return async (req, res) => {
+    const change = await ops[op](input(req));
+    broadcast(change.boardId, change.event, change.data, req.get("x-socket-id"));
+    if (status === 204) res.status(204).end();
+    else res.status(status).json(change.result);
+  };
+}
 
-routes.post("/columns/:id/cards", async (req, res) => {
-  const title = text(req.body?.title, "title");
-  const column = await columnOr404(req.params.id);
-  const last = await db.card.findFirst({
-    where: { columnId: req.params.id },
-    orderBy: { position: "desc" },
-  });
-  const card = await db.card.create({
-    data: {
-      title,
-      description: typeof req.body?.description === "string" ? req.body.description : "",
-      columnId: req.params.id,
-      position: generateKeyBetween(last?.position ?? null, null),
-    },
-  });
-  emit(req, column.boardId, "card:created", card);
-  res.status(201).json(card);
-});
-
-routes.patch("/cards/:id", async (req, res) => {
-  const data: { title?: string; description?: string } = {};
-  if (req.body?.title !== undefined) data.title = text(req.body.title, "title");
-  if (typeof req.body?.description === "string") data.description = req.body.description;
-  const { column, ...card } = await db.card.update({
-    where: { id: req.params.id },
-    data: { ...data, version: { increment: 1 } },
-    include: withBoard,
-  });
-  emit(req, column.boardId, "card:updated", card);
-  res.json(card);
-});
-
-routes.post("/cards/:id/move", async (req, res) => {
-  const id = req.params.id;
-  const columnId = text(req.body?.columnId, "columnId");
-  const { beforeId, afterId } = req.body ?? {};
-  if (beforeId === id || afterId === id) throw new HttpError(400, "card não pode ser vizinho de si mesmo");
-
-  const target = await columnOr404(columnId);
-  const current = await db.card.findUnique({ where: { id }, include: withBoard });
-  if (!current) throw new HttpError(404, "card não encontrado");
-  if (current.column.boardId !== target.boardId) throw new HttpError(400, "coluna de outro quadro");
-
-  async function neighbor(nid: unknown): Promise<string | null> {
-    if (nid == null) return null;
-    const card = await db.card.findUnique({ where: { id: String(nid) } });
-    if (!card || card.columnId !== columnId) throw new HttpError(400, "vizinho inválido para essa coluna");
-    return card.position;
-  }
-
-  let before = await neighbor(beforeId);
-  const after = await neighbor(afterId);
-  if (before === null && after === null) {
-    const last = await db.card.findFirst({
-      where: { columnId, id: { not: id } },
-      orderBy: { position: "desc" },
-    });
-    before = last?.position ?? null;
-  }
-
-  if (before !== null && after !== null && before >= after) {
-    throw new HttpError(400, "beforeId precisa estar acima de afterId");
-  }
-  const position = generateKeyBetween(before, after);
-
-  const card = await db.card.update({
-    where: { id },
-    data: { columnId, position, version: { increment: 1 } },
-  });
-  emit(req, target.boardId, "card:moved", card);
-  res.json(card);
-});
-
-routes.delete("/cards/:id", async (req, res) => {
-  const { column, ...card } = await db.card.delete({ where: { id: req.params.id }, include: withBoard });
-  emit(req, column.boardId, "card:deleted", { id: card.id, columnId: card.columnId });
-  res.status(204).end();
-});
+routes.post("/boards/:id/columns", run("createColumn", (req) => ({ ...req.body, boardId: req.params.id }), 201));
+routes.post("/columns/:id/cards", run("createCard", (req) => ({ ...req.body, columnId: req.params.id }), 201));
+routes.patch("/cards/:id", run("updateCard", (req) => ({ ...req.body, id: req.params.id })));
+routes.post("/cards/:id/move", run("moveCard", (req) => ({ ...req.body, id: req.params.id })));
+routes.delete("/cards/:id", run("deleteCard", (req) => ({ id: req.params.id }), 204));
 
 export const onError: ErrorRequestHandler = (err, _req, res, _next) => {
-  if (err instanceof HttpError) return res.status(err.status).json({ error: err.message });
-  if (err?.code === "P2025" || err?.code === "P2003") return res.status(404).json({ error: "não encontrado" });
-  console.error(err);
-  res.status(500).json({ error: "erro interno" });
+  const { status, error } = toError(err);
+  res.status(status).json({ error });
 };
