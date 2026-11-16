@@ -2,7 +2,7 @@ import { BrowserRouter, Link, Navigate, Route, Routes } from "react-router";
 import { AuthProvider, useAuth } from "./auth";
 import { KanflowButton, KanflowIcon, KanflowLogo } from "./components/ui";
 import { BoardView } from "./pages/BoardView";
-import { Boards } from "./pages/Boards";
+import { Home } from "./pages/Home";
 import { Landing } from "./pages/Landing";
 import { Login } from "./pages/Login";
 
@@ -21,7 +21,7 @@ function Shell() {
     );
   }
 
-  return (
+  const boardPage = (
     <>
       <header className="topbar">
         <Link to="/" className="brand">
@@ -33,12 +33,16 @@ function Shell() {
           Sair
         </KanflowButton>
       </header>
-      <Routes>
-        <Route path="/" element={<Boards />} />
-        <Route path="/boards/:id" element={<BoardView />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <BoardView />
     </>
+  );
+
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/boards/:id" element={boardPage} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 

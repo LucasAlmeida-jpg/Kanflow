@@ -293,6 +293,10 @@ const [renameLog] = (await call("GET", `/boards/${rt.id}/activity?limit=1`)).dat
 assert.equal(renameLog.event, "board:updated");
 assert.deepEqual([renameLog.before.title, renameLog.after.title], ["Realtime", "Realtime renomeado"]);
 assert.equal((await call("GET", "/boards")).data.find((x: any) => x.id === rt.id).role, "owner");
+const listed = (await call("GET", "/boards", undefined, undefined, token2)).data.find((x: any) => x.id === rt.id);
+assert.equal(listed.owner, "Smoke");
+assert.equal(listed.memberCount, 2);
+assert.equal(listed.lastActivityAt, renameLog.createdAt);
 assert.equal((await call("GET", "/boards", undefined, undefined, token2)).data.find((x: any) => x.id === rt.id).role, "member");
 
 const toDelete = (await call("POST", "/boards", { title: "Para apagar" })).data;
