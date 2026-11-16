@@ -10,6 +10,7 @@ type KanflowPromptDialogProps = {
   initialValue?: string;
   confirmLabel: string;
   maxLength?: number;
+  requireChange?: boolean;
   onConfirm: (value: string) => void;
   onCancel: () => void;
 };
@@ -27,6 +28,7 @@ function PromptForm({
   initialValue = "",
   confirmLabel,
   maxLength = 200,
+  requireChange = false,
   onConfirm,
   onCancel,
 }: Omit<KanflowPromptDialogProps, "open" | "title">) {
@@ -38,7 +40,7 @@ function PromptForm({
     e.preventDefault();
     const next = value.trim();
     if (!next) return setError(`Preencha ${label.toLowerCase()}.`);
-    if (next === initialValue) return onCancel();
+    if (requireChange && next === initialValue) return onCancel();
     onConfirm(next);
   }
 

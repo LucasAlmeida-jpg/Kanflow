@@ -202,6 +202,7 @@ export function Home() {
         title="Renomear quadro"
         label="Nome do quadro"
         initialValue={renaming?.title ?? ""}
+        requireChange
         confirmLabel="Salvar"
         onConfirm={(next) => renaming && void rename(renaming, next)}
         onCancel={() => setRenaming(null)}
