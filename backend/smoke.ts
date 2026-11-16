@@ -129,7 +129,7 @@ assert.equal(updated.result.version, 3);
 
 assert.deepEqual(await op("dropTable", {}, "op-x"), { opId: "op-x", ok: false, status: 400, error: "op desconhecida" });
 assert.deepEqual(await op("createCard", { columnId: col.id }, "op-y"), { opId: "op-y", ok: false, status: 400, error: "title é obrigatório" });
-assert.deepEqual(await op("updateCard", { id: "nao-existe", title: "x" }, "op-z"), { opId: "op-z", ok: false, status: 404, error: "não encontrado" });
+assert.deepEqual(await op("updateCard", { id: "nao-existe", title: "x" }, "op-z"), { opId: "op-z", ok: false, status: 404, error: "card não encontrado" });
 assert.equal((await c.socket.emitWithAck("op", { type: "createCard", payload: {} })).error, "opId é obrigatório");
 await settle();
 
@@ -137,6 +137,41 @@ assert.deepEqual(d.events.map(([e]) => e), ["card:created", "card:created", "car
 assert.equal(c.events.length, 0);
 const rtBoard = (await call("GET", `/boards/${rt.id}`)).data;
 assert.deepEqual(rtBoard.columns.map((x: any) => x.cards.map((k: any) => k.title)), [["Paralelo"], ["Editado via socket"], []]);
+
+const kid = created.result.id;
+d.events.length = 0;
+
+const v4 = await op("updateCard", { id: kid, title: "Versão 4", version: 3 });
+assert.equal(v4.ok, true);
+assert.equal(v4.result.version, 4);
+
+const stale = await op("updateCard", { id: kid, title: "Atrasado", version: 3 });
+assert.equal(stale.ok, false);
+assert.equal(stale.status, 409);
+assert.equal(stale.current.version, 4);
+assert.equal(stale.current.title, "Versão 4");
+
+assert.equal((await op("moveCard", { id: kid, columnId: col.id, version: 3 })).status, 409);
+assert.equal((await op("deleteCard", { id: kid, version: 3 })).status, 409);
+assert.equal((await op("updateCard", { id: kid, title: "x", version: "4" })).status, 400);
+
+const restStale = await call("PATCH", `/cards/${kid}`, { title: "REST atrasado", version: 2 });
+assert.equal(restStale.status, 409);
+assert.equal(restStale.data.current.title, "Versão 4");
+
+assert.equal((await op("deleteCard", { id: kid, version: 4 })).ok, true);
+await settle();
+assert.deepEqual(d.events.map(([e]) => e), ["card:updated", "card:deleted"]);
+
+const log = (await call("GET", `/boards/${rt.id}/activity?limit=3`)).data;
+assert.deepEqual(log.map((x: any) => x.event), ["card:deleted", "card:updated", "card:updated"]);
+assert.equal(log[0].entityId, kid);
+assert.equal(log[0].before.title, "Versão 4");
+assert.equal(log[0].after, null);
+assert.equal(log[1].before.title, "Editado via socket");
+assert.equal(log[1].after.title, "Versão 4");
+assert.equal((await call("GET", `/boards/${rt.id}/activity`)).data.length, 13);
+assert.deepEqual((await call("GET", `/boards/nao-existe/activity`)).data, []);
 
 [a, b, c, d, outsider].forEach((x) => x.socket.disconnect());
 console.log("smoke ok");

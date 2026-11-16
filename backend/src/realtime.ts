@@ -1,12 +1,12 @@
 import { Server } from "socket.io";
 import { db } from "./db.js";
-import { isOpType, ops, toError } from "./ops.js";
+import { apply, isOpType, toError, type ErrorBody } from "./ops.js";
 
 export const io = new Server({ cors: { origin: "*" } });
 
 const room = (boardId: string) => `board:${boardId}`;
 
-type OpResult = { opId: string; ok: true; result: unknown } | { opId: string; ok: false; status: number; error: string };
+type OpResult = { opId: string; ok: true; result: unknown } | ({ opId: string; ok: false } & ErrorBody);
 
 const recentOps = new Map<string, Promise<OpResult>>();
 const MAX_RECENT_OPS = 1000;
@@ -14,7 +14,7 @@ const MAX_RECENT_OPS = 1000;
 async function execute(opId: string, type: unknown, payload: unknown, socketId: string): Promise<OpResult> {
   if (!isOpType(type)) return { opId, ok: false, status: 400, error: "op desconhecida" };
   try {
-    const change = await ops[type]((payload ?? {}) as Record<string, unknown>);
+    const change = await apply(type, (payload ?? {}) as Record<string, unknown>);
     broadcast(change.boardId, change.event, change.data, socketId);
     return { opId, ok: true, result: change.result };
   } catch (err) {
