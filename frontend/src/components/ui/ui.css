@@ -37,6 +37,17 @@
   line-height: 16px;
 }
 
+.btn-lg {
+  padding: 11px 20px;
+  font-size: 15px;
+  line-height: 22px;
+  border-radius: var(--radius-lg);
+}
+
+.btn-link {
+  text-decoration: none;
+}
+
 .btn-block {
   width: 100%;
 }
@@ -105,6 +116,37 @@
 
 .btn-sm .icon {
   font-size: 14px;
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.logo-tile {
+  fill: var(--logo-tile);
+}
+
+.logo-bar {
+  fill: var(--logo-bar);
+}
+
+.logo-name {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 28px;
+  color: var(--text-highlighted);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .field {
