@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
+import { io as connect, type Socket } from "socket.io-client";
 
 const B = process.env.API ?? "http://localhost:3001";
 
-async function call(method: string, path: string, body?: unknown) {
+async function call(method: string, path: string, body?: unknown, socketId?: string) {
   const res = await fetch(B + path, {
     method,
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", ...(socketId && { "x-socket-id": socketId }) },
     body: body ? JSON.stringify(body) : null,
   });
   return { status: res.status, data: res.status === 204 ? null : await res.json() };
@@ -53,4 +54,51 @@ assert.equal((await call("POST", "/columns/nao-existe/cards", { title: "x" })).s
 assert.equal((await call("DELETE", `/cards/${c1.id}`)).status, 204);
 assert.equal((await call("PATCH", `/cards/${c1.id}`, { title: "x" })).status, 404);
 
+async function client() {
+  const socket = connect(B, { transports: ["websocket"] });
+  await new Promise((ok) => socket.once("connect", () => ok(null)));
+  const events: [string, any][] = [];
+  socket.onAny((event, data) => events.push([event, data]));
+  return { socket, events };
+}
+const join = (s: Socket, id: string) => s.emitWithAck("board:join", id);
+const settle = () => new Promise((ok) => setTimeout(ok, 150));
+
+const rt = (await call("POST", "/boards", { title: "Realtime" })).data;
+const a = await client();
+const b = await client();
+const outsider = await client();
+
+assert.deepEqual(await join(a.socket, rt.id), { ok: true });
+assert.deepEqual(await join(b.socket, rt.id), { ok: true });
+assert.deepEqual(await join(outsider.socket, board.id), { ok: true });
+assert.deepEqual(await join(a.socket, "nao-existe"), { error: "board não encontrado" });
+
+const col = (await call("POST", `/boards/${rt.id}/columns`, { title: "Col" }, a.socket.id)).data;
+const col2 = (await call("POST", `/boards/${rt.id}/columns`, { title: "Col 2" }, a.socket.id)).data;
+const k = (await call("POST", `/columns/${col.id}/cards`, { title: "K" }, a.socket.id)).data;
+await call("PATCH", `/cards/${k.id}`, { title: "K2" }, a.socket.id);
+await call("POST", `/cards/${k.id}/move`, { columnId: col2.id }, a.socket.id);
+await call("DELETE", `/cards/${k.id}`, undefined, a.socket.id);
+await settle();
+
+assert.deepEqual(b.events.map(([e]) => e), [
+  "column:created", "column:created", "card:created", "card:updated", "card:moved", "card:deleted",
+]);
+assert.equal(b.events[3]![1].title, "K2");
+assert.equal(b.events[4]![1].columnId, col2.id);
+assert.deepEqual(b.events[5]![1], { id: k.id, columnId: col2.id });
+assert.equal(a.events.length, 0);
+assert.equal(outsider.events.length, 0);
+
+assert.equal((await call("POST", `/cards/${c3.id}/move`, { columnId: col.id })).status, 400);
+
+b.socket.emit("board:leave", rt.id);
+await settle();
+await call("POST", `/boards/${rt.id}/columns`, { title: "Col 3" });
+await settle();
+assert.equal(b.events.length, 6);
+assert.equal(a.events.length, 1);
+
+[a, b, outsider].forEach((c) => c.socket.disconnect());
 console.log("smoke ok");
