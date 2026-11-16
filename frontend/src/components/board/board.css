@@ -9,6 +9,12 @@
   margin-right: auto;
 }
 
+.board-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
 .board-status {
   display: inline-flex;
   align-items: center;
@@ -108,7 +114,7 @@
   display: flex;
   align-items: flex-start;
   gap: var(--space-2);
-  cursor: grab;
+  cursor: pointer;
   touch-action: none;
   user-select: none;
 }
@@ -122,23 +128,40 @@
   outline-offset: 2px;
 }
 
-.board-card-title {
+.board-card-body {
   flex: 1;
   min-width: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.board-card-title {
   overflow-wrap: anywhere;
 }
 
-.board-card .board-card-delete {
+.board-card-hint {
+  color: var(--text-muted);
+  line-height: 1;
+}
+
+.board-card-actions {
+  display: flex;
   margin: -3px -6px -3px 0;
-  padding: 3px 6px;
   opacity: 0;
+}
+
+.board-card:hover .board-card-actions,
+.board-card:focus-within .board-card-actions {
+  opacity: 1;
+}
+
+.board-card .board-card-action {
+  padding: 3px 6px;
   color: var(--text-muted);
 }
 
-.board-card:hover .board-card-delete,
-.board-card:focus-within .board-card-delete,
-.board-card .board-card-delete:focus-visible {
-  opacity: 1;
+.board-card .board-card-action:hover {
+  color: var(--text-highlighted);
 }
 
 .board-card .board-card-delete:hover {
@@ -215,6 +238,49 @@
 
 .board-notice .icon {
   color: var(--warning);
+}
+
+.card-editor-form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.card-editor-meta {
+  margin: -8px 0 0;
+}
+
+.activity-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+
+.activity-item {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.activity-item:last-child {
+  border-bottom: 0;
+}
+
+.activity-item p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.activity-item strong {
+  color: var(--text-highlighted);
+  font-weight: 600;
+}
+
+.activity-time {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-muted);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -15,6 +15,7 @@ export function toError(err: any): ErrorBody {
     return { status: err.status, error: err.message, ...(err.current !== undefined && { current: err.current }) };
   }
   if (err?.code === "P2025" || err?.code === "P2003") return { status: 404, error: "não encontrado" };
+  if (err?.code === "P2002") return { status: 409, error: "já existe um item com esse id" };
   console.error(err);
   return { status: 500, error: "erro interno" };
 }
@@ -27,6 +28,13 @@ export function text(v: unknown, field: string, max = 200): string {
 }
 
 export const MAX_DESCRIPTION = 10_000;
+const CLIENT_ID = /^[a-z0-9]{16,40}$/;
+
+function clientId(v: unknown): string | undefined {
+  if (v === undefined) return undefined;
+  if (typeof v !== "string" || !CLIENT_ID.test(v)) throw new HttpError(400, "id inválido");
+  return v;
+}
 
 function description(v: unknown): string | undefined {
   if (typeof v !== "string") return undefined;
@@ -94,8 +102,10 @@ export const ops = {
   async createCard(tx: Tx, p: Input, userId: string): Promise<Change> {
     const title = text(p.title, "title");
     const column = await columnOr404(tx, text(p.columnId, "columnId"), userId);
+    const id = clientId(p.id);
     const card = await tx.card.create({
       data: {
+        ...(id && { id }),
         title,
         description: description(p.description) ?? "",
         columnId: column.id,
