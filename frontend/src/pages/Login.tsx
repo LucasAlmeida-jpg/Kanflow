@@ -1,5 +1,6 @@
 import { useState, type SubmitEvent } from "react";
 import { useAuth } from "../auth";
+import { Button, Card, Input } from "../components/ui";
 
 export function Login() {
   const { login, register } = useAuth();
@@ -28,31 +29,31 @@ export function Login() {
 
   return (
     <main className="auth">
-      <form className="auth-card" onSubmit={submit}>
+      <Card as="form" variant="muted" padding="lg" className="auth-card" onSubmit={submit}>
         <h1 className="brand">Kanflow</h1>
         <p className="muted">{isLogin ? "Entre na sua conta" : "Crie sua conta"}</p>
 
         {!isLogin && (
-          <label>
-            Nome
-            <input value={name} onChange={(e) => setName(e.target.value)} required autoComplete="name" />
-          </label>
+          <Input label="Nome" value={name} onChange={(e) => setName(e.target.value)} required autoComplete="name" />
         )}
-        <label>
-          Email
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
-        </label>
-        <label>
-          Senha
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={isLogin ? undefined : 8}
-            autoComplete={isLogin ? "current-password" : "new-password"}
-          />
-        </label>
+        <Input
+          label="Email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          autoComplete="email"
+        />
+        <Input
+          label="Senha"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          minLength={isLogin ? undefined : 8}
+          hint={isLogin ? undefined : "Mínimo de 8 caracteres."}
+          autoComplete={isLogin ? "current-password" : "new-password"}
+        />
 
         {error && (
           <p className="error" role="alert">
@@ -60,13 +61,13 @@ export function Login() {
           </p>
         )}
 
-        <button className="primary" disabled={busy}>
-          {busy ? "Aguarde..." : isLogin ? "Entrar" : "Criar conta"}
-        </button>
-        <button type="button" className="link" onClick={() => setMode(isLogin ? "register" : "login")}>
+        <Button type="submit" variant="primary" block loading={busy}>
+          {isLogin ? "Entrar" : "Criar conta"}
+        </Button>
+        <Button variant="ghost" onClick={() => setMode(isLogin ? "register" : "login")}>
           {isLogin ? "Não tem conta? Cadastre-se" : "Já tem conta? Entrar"}
-        </button>
-      </form>
+        </Button>
+      </Card>
     </main>
   );
 }

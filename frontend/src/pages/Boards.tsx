@@ -1,11 +1,13 @@
 import { useEffect, useState, type SubmitEvent } from "react";
 import { Link } from "react-router";
 import { boardsApi, type Board } from "../api";
+import { Button, Card, Input } from "../components/ui";
 
 export function Boards() {
   const [boards, setBoards] = useState<Board[] | null>(null);
   const [title, setTitle] = useState("");
   const [error, setError] = useState("");
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     boardsApi.list()
@@ -17,12 +19,15 @@ export function Boards() {
     e.preventDefault();
     if (!title.trim()) return;
     setError("");
+    setCreating(true);
     try {
       const board = await boardsApi.create(title);
       setBoards((list) => [...(list ?? []), board]);
       setTitle("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "erro inesperado");
+    } finally {
+      setCreating(false);
     }
   }
 
@@ -31,13 +36,16 @@ export function Boards() {
       <h2>Seus quadros</h2>
 
       <form className="inline-form" onSubmit={create}>
-        <input
+        <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Nome do novo quadro"
           aria-label="Nome do novo quadro"
+          maxLength={200}
         />
-        <button className="primary">Criar quadro</button>
+        <Button type="submit" variant="primary" loading={creating}>
+          Criar quadro
+        </Button>
       </form>
 
       {error && (
@@ -54,9 +62,9 @@ export function Boards() {
         <ul className="board-grid">
           {boards.map((b) => (
             <li key={b.id}>
-              <Link className="board-tile" to={`/boards/${b.id}`}>
+              <Card as={Link} to={`/boards/${b.id}`} variant="muted" padding="lg" interactive className="board-tile">
                 {b.title}
-              </Link>
+              </Card>
             </li>
           ))}
         </ul>

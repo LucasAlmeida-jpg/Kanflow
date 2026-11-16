@@ -110,67 +110,9 @@ a {
   color: var(--text-primary);
 }
 
-input {
-  font: inherit;
-  color: var(--text-highlighted);
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: var(--space-2) var(--space-3);
-  width: 100%;
-  transition: border-color var(--transition);
-}
-
-input::placeholder {
-  color: var(--text-dimmed);
-}
-
-input:hover {
-  border-color: var(--border-accented);
-}
-
-input:focus-visible,
-button:focus-visible,
 a:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
-}
-
-button {
-  font: inherit;
-  cursor: pointer;
-}
-
-button:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
-.primary {
-  background: var(--primary);
-  color: var(--on-primary);
-  border: 0;
-  border-radius: var(--radius-md);
-  padding: var(--space-2) 14px;
-  font-size: 13px;
-  line-height: 18px;
-  font-weight: 500;
-  white-space: nowrap;
-  transition: background-color var(--transition);
-}
-
-.primary:hover:not(:disabled) {
-  background: var(--primary-hover);
-}
-
-.link {
-  background: none;
-  border: 0;
-  color: var(--text-primary);
-  padding: var(--space-1);
-  font-size: 13px;
-  line-height: 18px;
-  font-weight: 500;
 }
 
 .muted {
@@ -198,13 +140,10 @@ button:disabled {
   padding: var(--space-4);
 }
 
-.auth-card {
+.ui-card.auth-card {
   width: 100%;
   max-width: 360px;
-  background: var(--bg-muted);
-  border: 1px solid var(--border);
   border-radius: var(--radius-xl);
-  padding: var(--space-6);
   display: grid;
   gap: 14px;
 }
@@ -217,15 +156,6 @@ button:disabled {
 
 .auth-card .muted {
   margin: -8px 0 var(--space-1);
-}
-
-.auth-card label {
-  display: grid;
-  gap: var(--space-1);
-  font-size: 13px;
-  line-height: 18px;
-  font-weight: 500;
-  color: var(--text);
 }
 
 .topbar {
@@ -265,18 +195,10 @@ button:disabled {
 }
 
 .board-tile {
-  display: block;
-  padding: 20px var(--space-4);
-  background: var(--bg-muted);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  color: var(--text-highlighted);
-  text-decoration: none;
   font-weight: 500;
-  transition: border-color var(--transition);
 }
 
-.board-tile:hover {
+.ui-card.board-tile:hover {
   border-color: var(--primary);
 }
 
@@ -288,12 +210,10 @@ button:disabled {
   padding-bottom: var(--space-2);
 }
 
-.column {
+.ui-card.column {
   flex: 0 0 272px;
-  background: var(--bg-muted);
-  border: 1px solid var(--border-muted);
-  border-radius: var(--radius-lg);
   padding: var(--space-3);
+  border-color: var(--border-muted);
 }
 
 .column h3 {
@@ -306,20 +226,6 @@ button:disabled {
   margin: 0;
   display: grid;
   gap: var(--space-2);
-}
-
-.card {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: var(--space-2) var(--space-3);
-  color: var(--text-highlighted);
-  box-shadow: var(--shadow-sm);
-  transition: border-color var(--transition);
-}
-
-.card:hover {
-  border-color: var(--border-accented);
 }
 
 @media (prefers-reduced-motion: reduce) {
