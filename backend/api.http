@@ -1,0 +1,75 @@
+@api = http://localhost:3001
+
+###
+GET {{api}}/health
+
+###
+GET {{api}}/boards
+
+###
+# @name board
+POST {{api}}/boards
+content-type: application/json
+
+{ "title": "Meu quadro" }
+
+###
+# @name todo
+POST {{api}}/boards/{{board.response.body.$.id}}/columns
+content-type: application/json
+
+{ "title": "A fazer" }
+
+###
+# @name done
+POST {{api}}/boards/{{board.response.body.$.id}}/columns
+content-type: application/json
+
+{ "title": "Feito" }
+
+###
+# @name card1
+POST {{api}}/columns/{{todo.response.body.$.id}}/cards
+content-type: application/json
+
+{ "title": "Card 1", "description": "primeiro card" }
+
+###
+# @name card2
+POST {{api}}/columns/{{todo.response.body.$.id}}/cards
+content-type: application/json
+
+{ "title": "Card 2" }
+
+###
+GET {{api}}/boards/{{board.response.body.$.id}}
+
+###
+PATCH {{api}}/cards/{{card1.response.body.$.id}}
+content-type: application/json
+
+{ "title": "Card 1 editado" }
+
+###
+POST {{api}}/cards/{{card2.response.body.$.id}}/move
+content-type: application/json
+
+{ "columnId": "{{todo.response.body.$.id}}", "afterId": "{{card1.response.body.$.id}}" }
+
+###
+POST {{api}}/cards/{{card1.response.body.$.id}}/move
+content-type: application/json
+
+{ "columnId": "{{done.response.body.$.id}}" }
+
+###
+POST {{api}}/boards
+content-type: application/json
+
+{ "title": "" }
+
+###
+GET {{api}}/boards/nao-existe
+
+###
+DELETE {{api}}/cards/{{card2.response.body.$.id}}

@@ -17,7 +17,7 @@ model Board {
 model Column {
   id       String @id @default(cuid())
   title    String
-  position String // fractional index: ordena colunas sem renumerar
+  position String
   boardId  String
   board    Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
   cards    Card[]
@@ -29,8 +29,8 @@ model Card {
   id          String   @id @default(cuid())
   title       String
   description String   @default("")
-  position    String // fractional index dentro da coluna
-  version     Int      @default(1) // usado depois para detectar conflitos
+  position    String
+  version     Int      @default(1)
   columnId    String
   column      Column   @relation(fields: [columnId], references: [id], onDelete: Cascade)
   updatedAt   DateTime @updatedAt
