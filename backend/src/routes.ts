@@ -16,9 +16,20 @@ routes.get("/boards", async (_req, res) => {
   const boards = await db.board.findMany({
     where: { members: { some: { userId } } },
     orderBy: { createdAt: "asc" },
-    include: { members: { where: { userId }, select: { role: true } } },
+    include: {
+      members: { select: { userId: true, role: true, user: { select: { name: true } } } },
+      activities: { orderBy: { createdAt: "desc" }, take: 1, select: { createdAt: true } },
+    },
   });
-  res.json(boards.map(({ members, ...board }) => ({ ...board, role: members[0]?.role })));
+  res.json(
+    boards.map(({ members, activities, ...board }) => ({
+      ...board,
+      role: members.find((m) => m.userId === userId)?.role,
+      owner: members.find((m) => m.role === "owner")?.user.name ?? null,
+      memberCount: members.length,
+      lastActivityAt: activities[0]?.createdAt ?? board.createdAt,
+    })),
+  );
 });
 
 routes.post("/boards", async (req, res) => {
