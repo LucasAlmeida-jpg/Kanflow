@@ -32,7 +32,7 @@ export function describeActivity(activity: Activity, columnName: (id: string | u
     case "card:deleted":
       return `apagou o card "${before?.title}"`;
     case "member:added":
-      return `adicionou ${after?.name} ao quadro`;
+      return activity.actor?.id === after?.id ? "entrou no quadro" : `adicionou ${after?.name} ao quadro`;
     case "member:removed":
       return activity.actor?.id === before?.id ? "saiu do quadro" : `removeu ${before?.name} do quadro`;
     case "board:updated":

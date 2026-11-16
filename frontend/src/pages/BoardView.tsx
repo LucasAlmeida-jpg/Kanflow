@@ -94,7 +94,10 @@ export function BoardView() {
   const {
     board,
     members,
+    invitations,
+    loadInvitations,
     inviteMember,
+    cancelInvitation,
     removeMember,
     error,
     status,
@@ -274,7 +277,14 @@ export function BoardView() {
                 </li>
               )}
             </ul>
-            <KanflowButton variant="secondary" size="sm" onClick={() => setShareOpen(true)}>
+            <KanflowButton
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setShareOpen(true);
+                if (members.some((m) => m.id === user?.id && m.role === "owner")) void loadInvitations();
+              }}
+            >
               <KanflowIcon name="users" />
               Compartilhar
             </KanflowButton>
@@ -338,8 +348,10 @@ export function BoardView() {
           open={shareOpen}
           boardTitle={board.title}
           members={members}
+          invitations={invitations}
           currentUserId={user.id}
           onInvite={inviteMember}
+          onCancelInvitation={(invitationId) => void cancelInvitation(invitationId)}
           onRemove={(member) => void removeMember(member.id)}
           onLeave={async () => {
             if (await removeMember(user.id)) navigate("/");

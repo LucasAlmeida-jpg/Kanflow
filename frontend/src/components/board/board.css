@@ -402,6 +402,12 @@
   border-bottom: 0;
 }
 
+.share-pending-icon {
+  background: transparent;
+  border: 1px dashed var(--border-accented);
+  color: var(--text-muted);
+}
+
 .share-person {
   flex: 1;
   min-width: 0;

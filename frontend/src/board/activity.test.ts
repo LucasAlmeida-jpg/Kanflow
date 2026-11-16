@@ -36,6 +36,8 @@ describe("describeActivity", () => {
     expect(describeActivity(activity("column:created", null, { title: "Doing" }), columnName)).toBe('criou a coluna "Doing"');
     expect(describeActivity(activity("board:updated", { title: "A" }, { title: "B" }), columnName)).toBe('renomeou o quadro "A" para "B"');
     expect(describeActivity(activity("member:added", null, { id: "u2", name: "Ana" }), columnName)).toBe("adicionou Ana ao quadro");
+    const joined = { ...activity("member:added", null, { id: "u2", name: "Ana" }), actor: { id: "u2", name: "Ana" } };
+    expect(describeActivity(joined, columnName)).toBe("entrou no quadro");
     expect(describeActivity(activity("member:removed", { id: "u2", name: "Ana" }, null), columnName)).toBe("removeu Ana do quadro");
     const left = { ...activity("member:removed", { id: "u2", name: "Ana" }, null), actor: { id: "u2", name: "Ana" } };
     expect(describeActivity(left, columnName)).toBe("saiu do quadro");
