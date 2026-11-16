@@ -110,11 +110,19 @@ GET {{api}}/boards/{{board.response.body.$.id}}/members
 authorization: Bearer {{token}}
 
 ###
-POST {{api}}/boards/{{board.response.body.$.id}}/members
+POST {{api}}/boards/{{board.response.body.$.id}}/invitations
 authorization: Bearer {{token}}
 content-type: application/json
 
 { "email": "outra@kanflow.dev" }
+
+###
+GET {{api}}/boards/{{board.response.body.$.id}}/invitations
+authorization: Bearer {{token}}
+
+###
+GET {{api}}/invitations
+authorization: Bearer {{token}}
 
 ###
 POST {{api}}/boards

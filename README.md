@@ -28,7 +28,7 @@ O Kanflow é um projeto de portfólio no estilo Trello/Linear simplificado. O fo
 - **Conflitos tratados**: se duas pessoas mexem no mesmo card, a segunda recebe a versão mais nova e um aviso, em vez de apagar a mudança da primeira.
 - **Desfazer e refazer** (Ctrl+Z / Ctrl+Shift+Z) de criar, editar, mover e apagar cards.
 - **Histórico de atividade**: quem fez o quê e quando.
-- **Membros**: convidar por email, remover e sair do quadro. Quem é removido perde o acesso na hora, inclusive com o quadro aberto.
+- **Convites com aceite**: o dono convida por email (vale até para quem ainda não tem conta) e a pessoa aceita ou recusa na home. O dono remove membros e cada membro pode sair; quem é removido perde o acesso na hora, inclusive com o quadro aberto.
 - **Modelos de quadro** (Sprint, Controle de bugs, Kanban simples...) que já criam as colunas.
 - **Tema claro e escuro**, design system próprio e layout responsivo.
 
@@ -38,7 +38,7 @@ O Kanflow é um projeto de portfólio no estilo Trello/Linear simplificado. O fo
     <td width="50%"><img src="docs/screenshots/activity.png" alt="Painel de atividade com as ações de cada pessoa" /><p align="center"><sub>Histórico de atividade</sub></p></td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/screenshots/share.png" alt="Painel para convidar e remover membros" /><p align="center"><sub>Convidar e remover membros</sub></p></td>
+    <td width="50%"><img src="docs/screenshots/share.png" alt="Painel Compartilhar com um convite pendente e os membros do quadro" /><p align="center"><sub>Convites pendentes e membros</sub></p></td>
     <td width="50%"><img src="docs/screenshots/card-editor.png" alt="Diálogo de edição de card com título e descrição" /><p align="center"><sub>Edição de card</sub></p></td>
   </tr>
   <tr>
@@ -115,6 +115,7 @@ sequenceDiagram
 - Senhas com `scrypt` e salt, comparação em tempo constante e o mesmo tempo de resposta para email inexistente.
 - O banco guarda só o hash SHA-256 do token de sessão; sessões expiram em 30 dias.
 - A checagem de membro acontece antes de qualquer outra, e quem não participa recebe 404, não 403, para não revelar que o quadro existe.
+- Convidar não revela se o email tem conta (a resposta é sempre igual e não traz nome), e ninguém entra num quadro sem aceitar o convite.
 - Limite de tentativas no login (por email e por IP), no cadastro e nas operações do socket; limite de tamanho nos textos.
 - Logout e remoção de membro derrubam o socket aberto na hora.
 
@@ -134,7 +135,7 @@ npm run dev
 - `npm run setup` instala as dependências do backend e do frontend, cria o banco SQLite (`backend/dev.db`) e gera o cliente do Prisma.
 - `npm run dev` sobe o backend em http://localhost:3001 e o frontend em **http://localhost:5173**.
 
-Para ver o tempo real, abra o mesmo quadro em duas janelas (uma anônima, com outra conta convidada pelo botão **Compartilhar**).
+Para ver o tempo real, crie uma segunda conta numa janela anônima, convide o email dela pelo botão **Compartilhar** do quadro, aceite o convite na home da segunda conta e abra o mesmo quadro nas duas janelas.
 
 ### Scripts úteis
 
@@ -152,7 +153,7 @@ Para ver o tempo real, abra o mesmo quadro em duas janelas (uma anônima, com ou
 
 ## Testes e CI
 
-- **Backend**: um smoke test (`backend/smoke.ts`) que sobe clientes reais de REST e Socket.IO e cobre autenticação, permissões, operações, conflitos, `opId` repetido, tempo real, histórico, membros e limites.
+- **Backend**: um smoke test (`backend/smoke.ts`) que sobe clientes reais de REST e Socket.IO e cobre autenticação, permissões, operações, conflitos, `opId` repetido, tempo real, histórico, convites, membros e limites.
 - **Frontend**: testes em Vitest do reducer do quadro, dos comandos de desfazer/refazer e dos textos do histórico.
 - **CI**: todo PR para a `main` roda typecheck, lint, testes, build, as migrações num banco novo, o smoke test e a checagem do título no padrão Conventional Commits.
 
@@ -189,8 +190,12 @@ frontend/src/
 | GET · POST | `/boards` | listar (com papel, dono, membros e última atividade) · criar |
 | GET · PATCH · DELETE | `/boards/:id` | ver com colunas e cards · renomear · apagar (só o dono) |
 | GET | `/boards/:id/activity` | histórico |
-| GET · POST | `/boards/:id/members` | listar · convidar por email (só o dono) |
+| GET | `/boards/:id/members` | listar membros |
 | DELETE | `/boards/:id/members/:userId` | remover (dono) ou sair (o próprio membro) |
+| GET · POST | `/boards/:id/invitations` | convites pendentes · convidar por email (só o dono) |
+| DELETE | `/boards/:id/invitations/:invitationId` | cancelar convite (só o dono) |
+| GET | `/invitations` | meus convites pendentes |
+| POST | `/invitations/:id/accept` · `/invitations/:id/decline` | aceitar · recusar |
 | POST | `/boards/:id/columns` · DELETE `/columns/:id` | criar · apagar coluna |
 | POST | `/columns/:id/cards` | criar card |
 | PATCH · DELETE | `/cards/:id` | editar · apagar |
