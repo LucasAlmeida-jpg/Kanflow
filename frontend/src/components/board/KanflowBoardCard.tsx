@@ -3,6 +3,7 @@ import { CSS } from "@dnd-kit/utilities";
 import type { Card } from "../../api";
 import { cx } from "../../lib/cx";
 import { KanflowButton, KanflowCard, KanflowIcon } from "../ui";
+import styles from "./board.module.css";
 
 type KanflowBoardCardProps = {
   card: Card;
@@ -25,28 +26,28 @@ export function KanflowBoardCard({ card, pending = false, onOpen, onDelete }: Ka
       as="li"
       ref={setNodeRef}
       padding="sm"
-      className={cx("board-card", isDragging && "is-placeholder", pending && "is-pending")}
+      className={cx(styles["board-card"], isDragging && styles["is-placeholder"], pending && styles["is-pending"])}
       style={{ transform: CSS.Translate.toString(transform), transition }}
       aria-busy={pending || undefined}
       onClick={() => !pending && onOpen?.(card)}
       {...attributes}
       {...listeners}
     >
-      <span className="board-card-body">
-        <span className="board-card-title">{card.title}</span>
+      <span className={styles["board-card-body"]}>
+        <span className={styles["board-card-title"]}>{card.title}</span>
         {card.description && (
-          <span className="board-card-hint">
+          <span className={styles["board-card-hint"]}>
             <KanflowIcon name="text-align-left" size={12} label="Tem descrição" />
           </span>
         )}
       </span>
       {!pending && (
-        <span className="board-card-actions">
+        <span className={styles["board-card-actions"]}>
           {onOpen && (
             <KanflowButton
               variant="ghost"
               size="sm"
-              className="board-card-action"
+              className={styles["board-card-action"]}
               aria-label={`Editar card ${card.title}`}
               {...stop}
               onClick={(e) => {
@@ -61,7 +62,7 @@ export function KanflowBoardCard({ card, pending = false, onOpen, onDelete }: Ka
             <KanflowButton
               variant="ghost"
               size="sm"
-              className="board-card-action board-card-delete"
+              className={cx(styles["board-card-action"], styles["board-card-delete"])}
               aria-label={`Apagar card ${card.title}`}
               {...stop}
               onClick={(e) => {
@@ -80,9 +81,9 @@ export function KanflowBoardCard({ card, pending = false, onOpen, onDelete }: Ka
 
 export function KanflowBoardCardOverlay({ card }: { card: Card }) {
   return (
-    <KanflowCard padding="sm" className="board-card is-overlay">
-      <span className="board-card-body">
-        <span className="board-card-title">{card.title}</span>
+    <KanflowCard padding="sm" className={cx(styles["board-card"], styles["is-overlay"])}>
+      <span className={styles["board-card-body"]}>
+        <span className={styles["board-card-title"]}>{card.title}</span>
       </span>
     </KanflowCard>
   );

@@ -1,6 +1,7 @@
 import { useId, type ReactNode } from "react";
 import { KanflowButton } from "./KanflowButton";
 import { KanflowDialog } from "./KanflowDialog";
+import styles from "./ui.module.css";
 
 type KanflowConfirmDialogProps = {
   open: boolean;
@@ -30,7 +31,7 @@ export function KanflowConfirmDialog({
       open={open}
       title={title}
       onClose={onCancel}
-      className="confirm-dialog"
+      className={styles["confirm-dialog"]}
       {...(description ? { describedBy: descriptionId } : {})}
       footer={
         <>
@@ -44,7 +45,7 @@ export function KanflowConfirmDialog({
       }
     >
       {description && (
-        <p id={descriptionId} className="dialog-text">
+        <p id={descriptionId} className={styles["dialog-text"]}>
           {description}
         </p>
       )}

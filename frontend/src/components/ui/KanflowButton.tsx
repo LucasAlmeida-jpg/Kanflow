@@ -1,5 +1,6 @@
 import type { ComponentPropsWithRef } from "react";
 import { cx } from "../../lib/cx";
+import styles from "./ui.module.css";
 
 type KanflowButtonProps = ComponentPropsWithRef<"button"> & {
   variant?: "primary" | "secondary" | "ghost" | "danger";
@@ -24,10 +25,10 @@ export function KanflowButton({
       type={type}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      className={cx("btn", `btn-${variant}`, `btn-${size}`, block && "btn-block", className)}
+      className={cx(styles["btn"], styles[`btn-${variant}`], styles[`btn-${size}`], block && styles["btn-block"], className)}
       {...rest}
     >
-      {loading && <span className="btn-spinner" aria-hidden="true" />}
+      {loading && <span className={styles["btn-spinner"]} aria-hidden="true" />}
       {children}
     </button>
   );

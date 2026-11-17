@@ -13,6 +13,8 @@ import {
   KanflowPromptDialog,
 } from "../components/ui";
 import { BLANK_TEMPLATE, TEMPLATES, type BoardTemplate } from "../home/templates";
+import page from "./pages.module.css";
+import styles from "../components/home/home.module.css";
 
 type View = "list" | "grid";
 
@@ -127,11 +129,11 @@ export function Home() {
   const firstName = user.name.split(/\s+/)[0];
 
   return (
-    <div className="app-layout">
+    <div className={styles["app-layout"]}>
       <KanflowAppSidebar user={user} onNewBoard={() => setTemplate(BLANK_TEMPLATE)} onLogout={logout} />
 
-      <main className="home">
-        <h1 className="home-title">Bem-vindo de volta, {firstName}</h1>
+      <main className={styles["home"]}>
+        <h1 className={styles["home-title"]}>Bem-vindo de volta, {firstName}</h1>
 
         {invitations.length > 0 && (
           <KanflowInvitationList
@@ -142,16 +144,16 @@ export function Home() {
           />
         )}
 
-        <section className="home-panel" aria-labelledby="start-title">
-          <header className="home-panel-header">
+        <section className={styles["home-panel"]} aria-labelledby="start-title">
+          <header className={styles["home-panel-header"]}>
             <h2 id="start-title">Comece algo novo</h2>
             {creating && (
-              <span className="muted" role="status">
+              <span className={"muted"} role="status">
                 Criando quadro...
               </span>
             )}
           </header>
-          <ul className="template-row">
+          <ul className={styles["template-row"]}>
             {[BLANK_TEMPLATE, ...TEMPLATES].map((t) => (
               <li key={t.id}>
                 <KanflowTemplateCard template={t} disabled={creating} onSelect={setTemplate} />
@@ -160,18 +162,19 @@ export function Home() {
           </ul>
         </section>
 
-        <section id="seus-quadros" className="home-boards" aria-labelledby="boards-title">
-          <header className="home-boards-header">
+        <section id="seus-quadros" className={styles["home-boards"]} aria-labelledby="boards-title">
+          <header className={styles["home-boards-header"]}>
             <h2 id="boards-title">Seus quadros</h2>
-            <KanflowInput
-              type="search"
-              className="home-search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar quadros"
-              aria-label="Buscar quadros"
-            />
-            <div className="view-toggle" role="group" aria-label="Modo de exibição">
+            <div className={styles["home-search-wrap"]}>
+              <KanflowInput
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Buscar quadros"
+                aria-label="Buscar quadros"
+              />
+            </div>
+            <div className={styles["view-toggle"]} role="group" aria-label="Modo de exibição">
               <KanflowButton variant="ghost" size="sm" aria-label="Lista" aria-pressed={view === "list"} onClick={() => changeView("list")}>
                 <KanflowIcon name="list" />
               </KanflowButton>
@@ -182,13 +185,13 @@ export function Home() {
           </header>
 
           {error && (
-            <p className="error" role="alert">
+            <p className={"error"} role="alert">
               {error}
             </p>
           )}
 
           {boards === null ? (
-            <p className="muted">Carregando...</p>
+            <p className={"muted"}>Carregando...</p>
           ) : boards.length === 0 ? (
             <KanflowEmptyState
               icon="layers"
@@ -206,7 +209,7 @@ export function Home() {
           ) : view === "list" ? (
             <KanflowBoardList boards={visible} onRename={setRenaming} onDelete={setDeleting} />
           ) : (
-            <ul className="board-grid">
+            <ul className={page["board-grid"]}>
               {visible.map((b) => (
                 <li key={b.id}>
                   <KanflowBoardTile board={b} onRename={setRenaming} onDelete={setDeleting} />

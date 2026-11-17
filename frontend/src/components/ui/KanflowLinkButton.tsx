@@ -1,5 +1,6 @@
 import { Link, type LinkProps } from "react-router";
 import { cx } from "../../lib/cx";
+import styles from "./ui.module.css";
 
 type KanflowLinkButtonProps = LinkProps & {
   variant?: "primary" | "secondary" | "ghost";
@@ -7,5 +8,5 @@ type KanflowLinkButtonProps = LinkProps & {
 };
 
 export function KanflowLinkButton({ variant = "secondary", size = "md", className, ...rest }: KanflowLinkButtonProps) {
-  return <Link className={cx("btn", `btn-${variant}`, `btn-${size}`, "btn-link", className)} {...rest} />;
+  return <Link className={cx(styles["btn"], styles[`btn-${variant}`], styles[`btn-${size}`], styles["btn-link"], className)} {...rest} />;
 }

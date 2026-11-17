@@ -1,4 +1,5 @@
 import { useId, type ReactNode } from "react";
+import styles from "./ui.module.css";
 
 type KanflowFieldProps = {
   label?: ReactNode;
@@ -16,20 +17,20 @@ export function KanflowField({ label, hint, error, id, children }: KanflowFieldP
   const describedBy = [hintId, errorId].filter(Boolean).join(" ") || undefined;
 
   return (
-    <div className="field">
+    <div className={styles["field"]}>
       {label && (
-        <label className="field-label" htmlFor={controlId}>
+        <label className={styles["field-label"]} htmlFor={controlId}>
           {label}
         </label>
       )}
       {children({ id: controlId, describedBy, invalid: !!error })}
       {hint && !error && (
-        <p className="field-hint" id={hintId}>
+        <p className={styles["field-hint"]} id={hintId}>
           {hint}
         </p>
       )}
       {error && (
-        <p className="field-error" id={errorId} role="alert">
+        <p className={styles["field-error"]} id={errorId} role="alert">
           {error}
         </p>
       )}

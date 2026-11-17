@@ -1,5 +1,7 @@
 import type { BoardTemplate } from "../../home/templates";
 import { KanflowCard, KanflowIcon } from "../ui";
+import styles from "./home.module.css";
+import { cx } from "../../lib/cx";
 
 type KanflowTemplateCardProps = {
   template: BoardTemplate;
@@ -16,26 +18,26 @@ export function KanflowTemplateCard({ template, disabled = false, onSelect }: Ka
       padding="none"
       interactive
       disabled={disabled}
-      className="template-card"
+      className={styles["template-card"]}
       aria-label={blank ? "Criar quadro em branco" : `Criar quadro com o modelo ${template.name}: ${template.columns.join(", ")}`}
       onClick={() => onSelect(template)}
     >
-      <span className={blank ? "template-thumb template-thumb-blank" : "template-thumb"} aria-hidden="true">
+      <span className={blank ? cx(styles["template-thumb"], styles["template-thumb-blank"]) : styles["template-thumb"]} aria-hidden="true">
         {blank ? (
           <KanflowIcon name="plus-circle" size={28} />
         ) : (
           template.columns.slice(0, 5).map((column, i) => (
-            <span key={column} className="template-col">
+            <span key={column} className={styles["template-col"]}>
               {Array.from({ length: ((i * 2) % 3) + 1 }, (_, j) => (
-                <span key={j} className={i === 1 && j === 0 ? "template-chip is-accent" : "template-chip"} />
+                <span key={j} className={i === 1 && j === 0 ? cx(styles["template-chip"], styles["is-accent"]) : styles["template-chip"]} />
               ))}
             </span>
           ))
         )}
       </span>
-      <span className="template-text">
-        <span className="template-name">{template.name}</span>
-        <span className="template-desc">{template.description}</span>
+      <span className={styles["template-text"]}>
+        <span className={styles["template-name"]}>{template.name}</span>
+        <span className={styles["template-desc"]}>{template.description}</span>
       </span>
     </KanflowCard>
   );

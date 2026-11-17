@@ -1,5 +1,3 @@
-import "./home.css";
-
 export { KanflowAppSidebar } from "./KanflowAppSidebar";
 export { KanflowBoardList } from "./KanflowBoardList";
 export { KanflowInvitationList } from "./KanflowInvitationList";
