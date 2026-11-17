@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { boardsApi, type Activity, type BoardDetail } from "../../api";
 import { describeActivity, timeAgo } from "../../board/activity";
 import { KanflowDialog, KanflowEmptyState } from "../ui";
+import styles from "./board.module.css";
 
 type KanflowActivityPanelProps = {
   open: boolean;
@@ -40,11 +41,11 @@ export function KanflowActivityPanel({ open, board, onClose }: KanflowActivityPa
   return (
     <KanflowDialog open={open} title="Atividade" variant="drawer" onClose={onClose}>
       {error && (
-        <p className="error" role="alert">
+        <p className={"error"} role="alert">
           {error}
         </p>
       )}
-      {items === null && !error && <p className="muted">Carregando...</p>}
+      {items === null && !error && <p className={"muted"}>Carregando...</p>}
       {items?.length === 0 && (
         <KanflowEmptyState
           compact
@@ -54,13 +55,13 @@ export function KanflowActivityPanel({ open, board, onClose }: KanflowActivityPa
         />
       )}
       {items && items.length > 0 && (
-        <ol className="activity-list">
+        <ol className={styles["activity-list"]}>
           {items.map((a) => (
-            <li key={a.id} className="activity-item">
+            <li key={a.id} className={styles["activity-item"]}>
               <p>
                 <strong>{a.actor?.name ?? "Alguém"}</strong> {describeActivity(a, columnName)}
               </p>
-              <time className="activity-time" dateTime={a.createdAt} title={new Date(a.createdAt).toLocaleString("pt-BR")}>
+              <time className={styles["activity-time"]} dateTime={a.createdAt} title={new Date(a.createdAt).toLocaleString("pt-BR")}>
                 {timeAgo(a.createdAt)}
               </time>
             </li>

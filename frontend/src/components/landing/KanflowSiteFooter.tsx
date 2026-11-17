@@ -1,15 +1,16 @@
 import { Link } from "react-router";
 import { KanflowLogo } from "../ui";
+import styles from "./landing.module.css";
 
 const STACK = ["React 19 + TypeScript", "Node.js + Express", "Socket.IO", "Prisma", "dnd-kit"];
 
 export function KanflowSiteFooter() {
   return (
-    <footer className="site-footer">
-      <div className="site-footer-inner">
-        <div className="site-footer-columns">
+    <footer className={styles["site-footer"]}>
+      <div className={styles["site-footer-inner"]}>
+        <div className={styles["site-footer-columns"]}>
           <nav aria-label="Produto">
-            <h2 className="site-footer-heading">Produto</h2>
+            <h2 className={styles["site-footer-heading"]}>Produto</h2>
             <ul>
               <li>
                 <a href="#recursos">Recursos</a>
@@ -20,7 +21,7 @@ export function KanflowSiteFooter() {
             </ul>
           </nav>
           <nav aria-label="Conta">
-            <h2 className="site-footer-heading">Conta</h2>
+            <h2 className={styles["site-footer-heading"]}>Conta</h2>
             <ul>
               <li>
                 <Link to="/entrar">Entrar</Link>
@@ -31,7 +32,7 @@ export function KanflowSiteFooter() {
             </ul>
           </nav>
           <div>
-            <h2 className="site-footer-heading">Feito com</h2>
+            <h2 className={styles["site-footer-heading"]}>Feito com</h2>
             <ul>
               {STACK.map((item) => (
                 <li key={item}>{item}</li>
@@ -39,8 +40,8 @@ export function KanflowSiteFooter() {
             </ul>
           </div>
         </div>
-        <div className="site-footer-bottom">
-          <KanflowLogo size={22} />
+        <div className={styles["site-footer-bottom"]}>
+          <KanflowLogo size={22} className={styles["footer-logo"]} />
           <span>© 2026 Kanflow</span>
         </div>
       </div>

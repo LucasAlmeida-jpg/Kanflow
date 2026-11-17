@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, type MouseEvent, type ReactNode } from "react
 import { cx } from "../../lib/cx";
 import { KanflowButton } from "./KanflowButton";
 import { KanflowIcon } from "./KanflowIcon";
+import styles from "./ui.module.css";
 
 type KanflowDialogProps = {
   open: boolean;
@@ -41,7 +42,7 @@ export function KanflowDialog({
   return (
     <dialog
       ref={ref}
-      className={cx("dialog", `dialog-${variant}`, className)}
+      className={cx(styles["dialog"], styles[`dialog-${variant}`], className)}
       aria-labelledby={titleId}
       aria-describedby={describedBy}
       onCancel={(e) => {
@@ -51,9 +52,9 @@ export function KanflowDialog({
       onClick={onBackdropClick}
     >
       {open && (
-        <div className="dialog-body">
-          <header className="dialog-header">
-            <h2 id={titleId} className="dialog-title">
+        <div className={styles["dialog-body"]}>
+          <header className={styles["dialog-header"]}>
+            <h2 id={titleId} className={styles["dialog-title"]}>
               {title}
             </h2>
             {variant === "drawer" && (
@@ -62,8 +63,8 @@ export function KanflowDialog({
               </KanflowButton>
             )}
           </header>
-          {children && <div className="dialog-content">{children}</div>}
-          {footer && <footer className="dialog-footer">{footer}</footer>}
+          {children && <div className={styles["dialog-content"]}>{children}</div>}
+          {footer && <footer className={styles["dialog-footer"]}>{footer}</footer>}
         </div>
       )}
     </dialog>

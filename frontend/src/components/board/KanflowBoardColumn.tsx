@@ -5,6 +5,7 @@ import { cx } from "../../lib/cx";
 import { KanflowButton, KanflowCard, KanflowIcon } from "../ui";
 import { KanflowAddForm } from "./KanflowAddForm";
 import { KanflowBoardCard } from "./KanflowBoardCard";
+import styles from "./board.module.css";
 
 type KanflowBoardColumnProps = {
   column: ColumnWithCards;
@@ -41,19 +42,19 @@ export function KanflowBoardColumn({
       ref={setNodeRef}
       variant="muted"
       padding="none"
-      className={cx("board-column", (isOver || highlighted) && "is-over", pending && "is-pending")}
+      className={cx(styles["board-column"], (isOver || highlighted) && styles["is-over"], pending && styles["is-pending"])}
       aria-labelledby={titleId}
     >
-      <header className="board-column-header">
+      <header className={styles["board-column-header"]}>
         <h3 id={titleId}>{column.title}</h3>
-        <span className="board-column-count" aria-label={`${count} cards`}>
+        <span className={styles["board-column-count"]} aria-label={`${count} cards`}>
           {count}
         </span>
         {!pending && (
           <KanflowButton
             variant="ghost"
             size="sm"
-            className="board-column-delete"
+            className={styles["board-column-delete"]}
             aria-label={`Apagar coluna ${column.title}`}
             onClick={() => onDelete(column)}
           >
@@ -64,7 +65,7 @@ export function KanflowBoardColumn({
 
 
       <SortableContext items={column.cards.map((c) => c.id)} strategy={verticalListSortingStrategy}>
-        <ul className="board-column-cards">
+        <ul className={styles["board-column-cards"]}>
           {column.cards.map((card) => (
             <KanflowBoardCard
               key={card.id}
@@ -77,7 +78,7 @@ export function KanflowBoardColumn({
         </ul>
       </SortableContext>
 
-      <footer className="board-column-footer">
+      <footer className={styles["board-column-footer"]}>
         <KanflowAddForm
           openLabel="Adicionar card"
           placeholder="Título do card"

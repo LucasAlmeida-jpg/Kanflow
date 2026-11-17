@@ -2,6 +2,8 @@ import { useId, useState, type SubmitEvent } from "react";
 import type { Card } from "../../api";
 import type { CardPatch } from "../../board/commands";
 import { KanflowButton, KanflowDialog, KanflowInput, KanflowTextarea } from "../ui";
+import styles from "./board.module.css";
+import { cx } from "../../lib/cx";
 
 type KanflowCardEditorProps = {
   card: Card | null;
@@ -12,7 +14,7 @@ type KanflowCardEditorProps = {
 
 export function KanflowCardEditor({ card, columnTitle, onSave, onClose }: KanflowCardEditorProps) {
   return (
-    <KanflowDialog open={!!card} title="Editar card" onClose={onClose} className="card-editor">
+    <KanflowDialog open={!!card} title="Editar card" onClose={onClose}>
       {card && <EditorForm key={card.id} card={card} columnTitle={columnTitle} onSave={onSave} onClose={onClose} />}
     </KanflowDialog>
   );
@@ -36,8 +38,8 @@ function EditorForm({ card, columnTitle, onSave, onClose }: KanflowCardEditorPro
   }
 
   return (
-    <form id={formId} className="card-editor-form" onSubmit={submit}>
-      {columnTitle && <p className="muted card-editor-meta">Na coluna {columnTitle}</p>}
+    <form id={formId} className={styles["card-editor-form"]} onSubmit={submit}>
+      {columnTitle && <p className={cx("muted", styles["card-editor-meta"])}>Na coluna {columnTitle}</p>}
       <KanflowInput
         label="Título"
         value={title}
@@ -58,7 +60,7 @@ function EditorForm({ card, columnTitle, onSave, onClose }: KanflowCardEditorPro
         rows={6}
         placeholder="Detalhes, links, critérios de pronto..."
       />
-      <div className="dialog-footer">
+      <div className={styles["editor-footer"]}>
         <KanflowButton variant="secondary" onClick={onClose}>
           Cancelar
         </KanflowButton>

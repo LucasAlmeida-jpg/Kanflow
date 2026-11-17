@@ -32,6 +32,8 @@ import {
 } from "../components/board";
 import { KanflowAvatar, KanflowButton, KanflowCard, KanflowConfirmDialog, KanflowIcon } from "../components/ui";
 import { cx } from "../lib/cx";
+import page from "./pages.module.css";
+import styles from "../components/board/board.module.css";
 
 const STATUS_LABEL: Record<ConnectionStatus, string> = {
   connecting: "Conectando...",
@@ -219,27 +221,27 @@ export function BoardView() {
 
   if (error) {
     return (
-      <main className="page">
-        <p className="error" role="alert">
+      <main className={page["page"]}>
+        <p className={"error"} role="alert">
           {error}
         </p>
-        <Link to="/" className="back-link">
+        <Link to="/" className={page["back-link"]}>
           <KanflowIcon name="arrow-left" />
           Voltar para os quadros
         </Link>
       </main>
     );
   }
-  if (!board) return <main className="page muted">Carregando...</main>;
+  if (!board) return <main className={cx(page["page"], "muted")}>Carregando...</main>;
 
   return (
-    <main className="page board-page">
-      <header className="board-header">
+    <main className={cx(page["page"], page["board-page"])}>
+      <header className={styles["board-header"]}>
         <h2>{board.title}</h2>
-        <span className={cx("board-status", `is-${status}`)} role="status">
+        <span className={cx(styles["board-status"], styles[`is-${status}`])} role="status">
           {STATUS_LABEL[status]}
         </span>
-        <div className="board-toolbar">
+        <div className={styles["board-toolbar"]}>
           <KanflowButton
             variant="ghost"
             size="sm"
@@ -262,8 +264,8 @@ export function BoardView() {
             <KanflowIcon name="redo" />
             Refazer
           </KanflowButton>
-          <div className="board-people">
-            <ul className="avatar-stack" aria-label={`${members.length} pessoas no quadro: ${members.map((m) => m.name).join(", ")}`}>
+          <div className={styles["board-people"]}>
+            <ul className={styles["avatar-stack"]} aria-label={`${members.length} pessoas no quadro: ${members.map((m) => m.name).join(", ")}`}>
               {members.slice(0, 4).map((m) => (
                 <li key={m.id}>
                   <KanflowAvatar name={m.name} size="sm" highlight={m.id === user?.id} />
@@ -271,7 +273,7 @@ export function BoardView() {
               ))}
               {members.length > 4 && (
                 <li>
-                  <span className="avatar avatar-sm avatar-more" aria-hidden="true">
+                  <span className={styles["avatar-more"]} aria-hidden="true">
                     +{members.length - 4}
                   </span>
                 </li>
@@ -305,7 +307,7 @@ export function BoardView() {
         onDragCancel={onDragCancel}
         accessibility={{ announcements, screenReaderInstructions: { draggable: INSTRUCTIONS } }}
       >
-        <div className="board-lanes">
+        <div className={styles["board-lanes"]}>
           {board.columns.map((column) => (
             <KanflowBoardColumn
               key={column.id}
@@ -320,8 +322,8 @@ export function BoardView() {
             />
           ))}
 
-          <KanflowCard variant="muted" padding="sm" className="board-add-column">
-            {board.columns.length === 0 && <p className="muted board-empty">Esse quadro ainda não tem colunas.</p>}
+          <KanflowCard variant="muted" padding="sm" className={styles["board-add-column"]}>
+            {board.columns.length === 0 && <p className={cx("muted", styles["board-empty"])}>Esse quadro ainda não tem colunas.</p>}
             <KanflowAddForm
               openLabel="Adicionar coluna"
               placeholder="Nome da coluna"
@@ -368,8 +370,8 @@ export function BoardView() {
       />
 
       {notice && (
-        <div className="board-notice" role="status">
-          <KanflowIcon name="warning" />
+        <div className={styles["board-notice"]} role="status">
+          <KanflowIcon name="warning" className={styles["notice-icon"]} />
           <span>{notice}</span>
           <KanflowButton variant="ghost" size="sm" aria-label="Fechar aviso" onClick={dismissNotice}>
             <KanflowIcon name="cross" />

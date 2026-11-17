@@ -1,5 +1,6 @@
 import { KanflowActionCard, KanflowHeroArt, KanflowSiteFooter, KanflowSiteHeader } from "../components/landing";
 import { KanflowIcon, KanflowLinkButton, type IconName } from "../components/ui";
+import styles from "../components/landing/landing.module.css";
 
 const FEATURES: { icon: IconName; title: string; text: string }[] = [
   { icon: "move", title: "Arraste e solte", text: "Mova cards dentro da coluna ou entre colunas, com prévia do lugar onde ele vai cair." },
@@ -18,23 +19,23 @@ const STEPS = [
 
 export function Landing() {
   return (
-    <div className="site">
+    <div className={styles["site"]}>
       <KanflowSiteHeader />
 
       <main>
-        <section className="hero" aria-labelledby="hero-title">
-          <p className="hero-eyebrow">
+        <section className={styles["hero"]} aria-labelledby="hero-title">
+          <p className={styles["hero-eyebrow"]}>
             <KanflowIcon name="sync" />
             Colaboração em tempo real
           </p>
-          <h1 id="hero-title" className="hero-title">
+          <h1 id="hero-title" className={styles["hero-title"]}>
             O quadro que o time edita junto, ao vivo
           </h1>
-          <p className="hero-text">
+          <p className={styles["hero-text"]}>
             Crie colunas, arraste cards e veja as mudanças de todo mundo na hora. Se alguém mexer no mesmo card que você, o
             Kanflow avisa em vez de sobrescrever.
           </p>
-          <div className="hero-actions">
+          <div className={styles["hero-actions"]}>
             <KanflowLinkButton to="/cadastro" variant="primary" size="lg">
               Criar conta grátis
             </KanflowLinkButton>
@@ -45,47 +46,47 @@ export function Landing() {
           <KanflowHeroArt />
         </section>
 
-        <section className="landing-section" aria-label="Por onde começar">
-          <div className="action-grid">
+        <section className={styles["landing-section"]} aria-label="Por onde começar">
+          <div className={styles["action-grid"]}>
             <KanflowActionCard to="/cadastro" title="Crie seu primeiro quadro" description="Cadastre-se de graça e monte o fluxo do seu time em minutos." />
             <KanflowActionCard to="/entrar" title="Entre na sua conta" description="Volte para os seus quadros de onde parou." />
             <KanflowActionCard to="#como-funciona" title="Veja como funciona" description="Três passos do quadro vazio ao time trabalhando junto." />
           </div>
         </section>
 
-        <section id="recursos" className="landing-section" aria-labelledby="recursos-title">
-          <h2 id="recursos-title" className="section-title">
+        <section id="recursos" className={styles["landing-section"]} aria-labelledby="recursos-title">
+          <h2 id="recursos-title" className={styles["section-title"]}>
             Feito para o time trabalhar junto
           </h2>
-          <ul className="feature-grid">
+          <ul className={styles["feature-grid"]}>
             {FEATURES.map((f) => (
-              <li key={f.title} className="feature">
-                <span className="feature-icon">
+              <li key={f.title} className={styles["feature"]}>
+                <span className={styles["feature-icon"]}>
                   <KanflowIcon name={f.icon} />
                 </span>
-                <h3 className="feature-title">{f.title}</h3>
-                <p className="feature-text">{f.text}</p>
+                <h3 className={styles["feature-title"]}>{f.title}</h3>
+                <p className={styles["feature-text"]}>{f.text}</p>
               </li>
             ))}
           </ul>
         </section>
 
-        <section id="como-funciona" className="landing-section" aria-labelledby="como-title">
-          <h2 id="como-title" className="section-title">
+        <section id="como-funciona" className={styles["landing-section"]} aria-labelledby="como-title">
+          <h2 id="como-title" className={styles["section-title"]}>
             Como funciona
           </h2>
-          <ol className="steps">
+          <ol className={styles["steps"]}>
             {STEPS.map((s, i) => (
-              <li key={s.title} className="step">
-                <span className="step-number" aria-hidden="true">
+              <li key={s.title} className={styles["step"]}>
+                <span className={styles["step-number"]} aria-hidden="true">
                   {i + 1}
                 </span>
-                <h3 className="feature-title">{s.title}</h3>
-                <p className="feature-text">{s.text}</p>
+                <h3 className={styles["feature-title"]}>{s.title}</h3>
+                <p className={styles["feature-text"]}>{s.text}</p>
               </li>
             ))}
           </ol>
-          <div className="steps-cta">
+          <div className={styles["steps-cta"]}>
             <KanflowLinkButton to="/cadastro" variant="primary" size="lg">
               Começar agora
             </KanflowLinkButton>

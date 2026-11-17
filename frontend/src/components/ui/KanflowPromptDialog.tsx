@@ -2,6 +2,7 @@ import { useId, useState, type SubmitEvent } from "react";
 import { KanflowButton } from "./KanflowButton";
 import { KanflowDialog } from "./KanflowDialog";
 import { KanflowInput } from "./KanflowInput";
+import styles from "./ui.module.css";
 
 type KanflowPromptDialogProps = {
   open: boolean;
@@ -45,7 +46,7 @@ function PromptForm({
   }
 
   return (
-    <form id={formId} className="dialog-form" onSubmit={submit}>
+    <form id={formId} className={styles["dialog-form"]} onSubmit={submit}>
       <KanflowInput
         label={label}
         value={value}
@@ -58,7 +59,7 @@ function PromptForm({
         autoFocus
         onFocus={(e) => e.currentTarget.select()}
       />
-      <div className="dialog-footer">
+      <div className={styles["dialog-footer"]}>
         <KanflowButton variant="secondary" onClick={onCancel}>
           Cancelar
         </KanflowButton>

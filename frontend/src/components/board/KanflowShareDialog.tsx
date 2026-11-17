@@ -2,6 +2,8 @@ import { useState, type SubmitEvent } from "react";
 import type { Invitation, Member } from "../../api";
 import { timeAgo } from "../../board/activity";
 import { KanflowAvatar, KanflowButton, KanflowConfirmDialog, KanflowDialog, KanflowIcon, KanflowInput } from "../ui";
+import styles from "./board.module.css";
+import { cx } from "../../lib/cx";
 
 type KanflowShareDialogProps = {
   open: boolean;
@@ -55,9 +57,9 @@ export function KanflowShareDialog({
 
   return (
     <>
-      <KanflowDialog open={open} title={`Compartilhar "${boardTitle}"`} onClose={onClose} className="share-dialog">
+      <KanflowDialog open={open} title={`Compartilhar "${boardTitle}"`} onClose={onClose}>
         {isOwner ? (
-          <form className="share-invite" onSubmit={invite}>
+          <form className={styles["share-invite"]} onSubmit={invite}>
             <KanflowInput
               type="email"
               label="Convidar por email"
@@ -79,29 +81,29 @@ export function KanflowShareDialog({
             </KanflowButton>
           </form>
         ) : (
-          <p className="muted share-note">Só o dono do quadro pode convidar pessoas.</p>
+          <p className={cx("muted", styles["share-note"])}>Só o dono do quadro pode convidar pessoas.</p>
         )}
         {sent && (
-          <p className="share-sent" role="status">
+          <p className={styles["share-sent"]} role="status">
             <KanflowIcon name="checkmark-circle" />
             {sent}
           </p>
         )}
 
         {isOwner && invitations.length > 0 && (
-          <section className="share-members" aria-labelledby="share-pending-title">
-            <h3 id="share-pending-title" className="share-members-title">
+          <section className={styles["share-members"]} aria-labelledby="share-pending-title">
+            <h3 id="share-pending-title" className={styles["share-members-title"]}>
               {invitations.length} {invitations.length === 1 ? "convite pendente" : "convites pendentes"}
             </h3>
-            <ul className="share-list">
+            <ul className={styles["share-list"]}>
               {invitations.map((i) => (
-                <li key={i.id} className="share-row">
-                  <span className="avatar avatar-md share-pending-icon" aria-hidden="true">
+                <li key={i.id} className={styles["share-row"]}>
+                  <span className={styles["share-pending-icon"]} aria-hidden="true">
                     <KanflowIcon name="envelope" />
                   </span>
-                  <span className="share-person">
-                    <span className="share-name">{i.email}</span>
-                    <span className="share-email">Convidado {timeAgo(i.createdAt)}</span>
+                  <span className={styles["share-person"]}>
+                    <span className={styles["share-name"]}>{i.email}</span>
+                    <span className={styles["share-email"]}>Convidado {timeAgo(i.createdAt)}</span>
                   </span>
                   <KanflowButton variant="ghost" size="sm" aria-label={`Cancelar convite de ${i.email}`} onClick={() => onCancelInvitation(i.id)}>
                     Cancelar
@@ -112,24 +114,24 @@ export function KanflowShareDialog({
           </section>
         )}
 
-        <section className="share-members" aria-labelledby="share-members-title">
-          <h3 id="share-members-title" className="share-members-title">
+        <section className={styles["share-members"]} aria-labelledby="share-members-title">
+          <h3 id="share-members-title" className={styles["share-members-title"]}>
             {members.length} {members.length === 1 ? "pessoa" : "pessoas"} neste quadro
           </h3>
-          <ul className="share-list">
+          <ul className={styles["share-list"]}>
             {members.map((m) => {
               const self = m.id === currentUserId;
               return (
-                <li key={m.id} className="share-row">
+                <li key={m.id} className={styles["share-row"]}>
                   <KanflowAvatar name={m.name} highlight={self} />
-                  <span className="share-person">
-                    <span className="share-name">
+                  <span className={styles["share-person"]}>
+                    <span className={styles["share-name"]}>
                       {m.name}
-                      {self && <span className="muted"> (você)</span>}
+                      {self && <span className={"muted"}> (você)</span>}
                     </span>
-                    <span className="share-email">{m.email}</span>
+                    <span className={styles["share-email"]}>{m.email}</span>
                   </span>
-                  <span className="share-role">{m.role === "owner" ? "Dono" : "Membro"}</span>
+                  <span className={styles["share-role"]}>{m.role === "owner" ? "Dono" : "Membro"}</span>
                   {m.role !== "owner" && (isOwner || self) && (
                     <KanflowButton variant="ghost" size="sm" onClick={() => setConfirming(m)}>
                       {self ? "Sair" : "Remover"}

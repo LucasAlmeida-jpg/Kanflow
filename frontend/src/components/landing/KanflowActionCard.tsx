@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { KanflowCard, KanflowIcon } from "../ui";
+import styles from "./landing.module.css";
 
 type KanflowActionCardProps = {
   title: string;
@@ -9,20 +10,20 @@ type KanflowActionCardProps = {
 
 export function KanflowActionCard({ title, description, to }: KanflowActionCardProps) {
   return (
-    <KanflowCard variant="muted" padding="lg" className="action-card">
-      <h3 className="action-card-title">
+    <KanflowCard variant="muted" padding="lg" className={styles["action-card"]}>
+      <h3 className={styles["action-card-title"]}>
         {to.startsWith("#") ? (
-          <a href={to} className="action-card-link">
+          <a href={to} className={styles["action-card-link"]}>
             {title}
           </a>
         ) : (
-          <Link to={to} className="action-card-link">
+          <Link to={to} className={styles["action-card-link"]}>
             {title}
           </Link>
         )}
       </h3>
-      <p className="action-card-description">{description}</p>
-      <span className="action-card-arrow" aria-hidden="true">
+      <p className={styles["action-card-description"]}>{description}</p>
+      <span className={styles["action-card-arrow"]} aria-hidden="true">
         <KanflowIcon name="arrow-right" />
       </span>
     </KanflowCard>

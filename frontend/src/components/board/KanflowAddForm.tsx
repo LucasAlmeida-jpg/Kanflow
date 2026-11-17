@@ -1,5 +1,6 @@
 import { useState, type KeyboardEvent, type SubmitEvent } from "react";
 import { KanflowButton, KanflowIcon, KanflowInput } from "../ui";
+import styles from "./board.module.css";
 
 type KanflowAddFormProps = {
   openLabel: string;
@@ -32,7 +33,7 @@ export function KanflowAddForm({ openLabel, placeholder, submitLabel, onSubmit, 
 
   if (!open) {
     return (
-      <KanflowButton variant="ghost" size="sm" block className="add-form-open" disabled={disabled} onClick={() => setOpen(true)}>
+      <KanflowButton variant="ghost" size="sm" block className={styles["add-form-open"]} disabled={disabled} onClick={() => setOpen(true)}>
         <KanflowIcon name="plus-circle" />
         {openLabel}
       </KanflowButton>
@@ -40,7 +41,7 @@ export function KanflowAddForm({ openLabel, placeholder, submitLabel, onSubmit, 
   }
 
   return (
-    <form className="add-form" onSubmit={submit} onKeyDown={onKeyDown}>
+    <form className={styles["add-form"]} onSubmit={submit} onKeyDown={onKeyDown}>
       <KanflowInput
         value={title}
         onChange={(e) => setTitle(e.target.value)}
@@ -49,7 +50,7 @@ export function KanflowAddForm({ openLabel, placeholder, submitLabel, onSubmit, 
         maxLength={200}
         autoFocus
       />
-      <div className="add-form-actions">
+      <div className={styles["add-form-actions"]}>
         <KanflowButton type="submit" variant="primary" disabled={!title.trim()}>
           {submitLabel}
         </KanflowButton>

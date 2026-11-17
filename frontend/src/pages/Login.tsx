@@ -2,6 +2,8 @@ import { useState, type SubmitEvent } from "react";
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "../auth";
 import { KanflowButton, KanflowCard, KanflowInput, KanflowLogo } from "../components/ui";
+import page from "./pages.module.css";
+import { cx } from "../lib/cx";
 
 export function Login({ mode }: { mode: "login" | "register" }) {
   const { login, register } = useAuth();
@@ -29,14 +31,14 @@ export function Login({ mode }: { mode: "login" | "register" }) {
   const isLogin = mode === "login";
 
   return (
-    <main className="auth">
-      <KanflowCard as="form" variant="muted" padding="lg" className="auth-card" onSubmit={submit}>
-        <h1 className="auth-brand">
+    <main className={page["auth"]}>
+      <KanflowCard as="form" variant="muted" padding="lg" className={page["auth-card"]} onSubmit={submit}>
+        <h1 className={page["auth-brand"]}>
           <Link to="/" aria-label="Kanflow, página inicial">
-            <KanflowLogo size={32} />
+            <KanflowLogo size={32} className={page["auth-logo"]} />
           </Link>
         </h1>
-        <p className="muted">{isLogin ? "Entre na sua conta" : "Crie sua conta"}</p>
+        <p className={cx("muted", page["auth-subtitle"])}>{isLogin ? "Entre na sua conta" : "Crie sua conta"}</p>
 
         {!isLogin && (
           <KanflowInput label="Nome" value={name} onChange={(e) => setName(e.target.value)} required autoComplete="name" />
@@ -61,7 +63,7 @@ export function Login({ mode }: { mode: "login" | "register" }) {
         />
 
         {error && (
-          <p className="error" role="alert">
+          <p className={"error"} role="alert">
             {error}
           </p>
         )}

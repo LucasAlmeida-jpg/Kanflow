@@ -1,5 +1,6 @@
 import type { ComponentPropsWithRef, ElementType } from "react";
 import { cx } from "../../lib/cx";
+import styles from "./ui.module.css";
 
 type KanflowCardProps<T extends ElementType> = {
   as?: T;
@@ -19,7 +20,7 @@ export function KanflowCard<T extends ElementType = "div">({
   const Tag: ElementType = as ?? "div";
   return (
     <Tag
-      className={cx("ui-card", `ui-card-${variant}`, `ui-card-pad-${padding}`, interactive && "ui-card-interactive", className)}
+      className={cx(styles["ui-card"], styles[`ui-card-${variant}`], styles[`ui-card-pad-${padding}`], interactive && styles["ui-card-interactive"], className)}
       {...rest}
     />
   );

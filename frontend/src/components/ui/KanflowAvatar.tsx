@@ -1,5 +1,6 @@
 import { cx } from "../../lib/cx";
 import { initials } from "../../lib/initials";
+import styles from "./ui.module.css";
 
 type KanflowAvatarProps = {
   name: string;
@@ -10,7 +11,7 @@ type KanflowAvatarProps = {
 
 export function KanflowAvatar({ name, size = "md", highlight = false, className }: KanflowAvatarProps) {
   return (
-    <span className={cx("avatar", `avatar-${size}`, highlight && "avatar-highlight", className)} title={name} aria-hidden="true">
+    <span className={cx(styles["avatar"], styles[`avatar-${size}`], highlight && styles["avatar-highlight"], className)} title={name} aria-hidden="true">
       {initials(name)}
     </span>
   );

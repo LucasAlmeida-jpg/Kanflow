@@ -5,11 +5,13 @@ import { BoardView } from "./pages/BoardView";
 import { Home } from "./pages/Home";
 import { Landing } from "./pages/Landing";
 import { Login } from "./pages/Login";
+import page from "./pages/pages.module.css";
+import { cx } from "./lib/cx";
 
 function Shell() {
   const { user, loading, logout } = useAuth();
 
-  if (loading) return <main className="page muted">Carregando...</main>;
+  if (loading) return <main className={cx(page["page"], "muted")}>Carregando...</main>;
   if (!user) {
     return (
       <Routes>
@@ -23,11 +25,11 @@ function Shell() {
 
   const boardPage = (
     <>
-      <header className="topbar">
-        <Link to="/" className="brand">
+      <header className={page["topbar"]}>
+        <Link to="/" className={page["brand"]}>
           <KanflowLogo size={24} />
         </Link>
-        <span className="muted">{user.name}</span>
+        <span className={"muted"}>{user.name}</span>
         <KanflowButton variant="ghost" size="sm" onClick={logout}>
           <KanflowIcon name="exit" />
           Sair

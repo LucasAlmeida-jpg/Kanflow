@@ -1,6 +1,7 @@
 import type { ComponentPropsWithRef, ReactNode } from "react";
 import { cx } from "../../lib/cx";
 import { KanflowField } from "./KanflowField";
+import styles from "./ui.module.css";
 
 type KanflowInputProps = ComponentPropsWithRef<"input"> & {
   label?: ReactNode;
@@ -16,7 +17,7 @@ export function KanflowInput({ label, hint, error, id, className, ...rest }: Kan
           id={id}
           aria-describedby={describedBy}
           aria-invalid={invalid || undefined}
-          className={cx("control", className)}
+          className={cx(styles["control"], className)}
           {...rest}
         />
       )}
